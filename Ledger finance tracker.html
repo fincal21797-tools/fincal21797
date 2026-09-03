@@ -166,6 +166,48 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ---------------- storage polyfill ----------------
+   window.storage.get/set/delete/list only exist inside Claude.ai's
+   artifact sandbox. Once this page is hosted on its own (e.g. GitHub
+   Pages), that API doesn't exist, so every save silently failed.
+   This shim gives the same interface backed by the browser's
+   localStorage, so nothing else below needs to change. */
+if (!window.storage) {
+  window.storage = (function(){
+    const PREFIX = 'ledgerTracker::';
+    const fullKey = k => PREFIX + k;
+    return {
+      async get(key){
+        try{
+          const raw = localStorage.getItem(fullKey(key));
+          if (raw === null) return null;
+          return { key, value: raw };
+        }catch(e){ return null; }
+      },
+      async set(key, value){
+        localStorage.setItem(fullKey(key), value);
+        return { key, value };
+      },
+      async delete(key){
+        localStorage.removeItem(fullKey(key));
+        return { key, deleted: true };
+      },
+      async list(prefix){
+        const p = prefix || '';
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++){
+          const k = localStorage.key(i);
+          if (k && k.indexOf(PREFIX) === 0){
+            const short = k.slice(PREFIX.length);
+            if (short.indexOf(p) === 0) keys.push(short);
+          }
+        }
+        return { keys, prefix: p };
+      }
+    };
+  })();
+}
+
 /* ---------------- constants ---------------- */
 const ASSET_CATEGORIES = ["Equity","Mutual Funds","ETFs","Gold","Silver","Real Estate","PPF","Recurring Deposit",
   "Sovereign Gold Bonds","Cash / Bank","Crypto","Foreign Equity","Other"];
