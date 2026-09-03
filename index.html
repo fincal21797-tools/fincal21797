@@ -1,24 +1,175 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>My Finance Tools</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Finance Toolkit</title>
 <style>
-body { font-family: sans-serif; background:#0d1117; color:#eee; padding:20px; }
-a { display:block; background:#161b22; color:#58a6ff; padding:15px; margin:10px 0;
-    border-radius:8px; text-decoration:none; font-size:18px; }
-a:hover { background:#21262d; }
-h1 { text-align:center; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(circle at top, #1a1f2e 0%, #0d1117 60%);
+    color: #e6edf3;
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+  }
+  .header { text-align: center; margin-bottom: 30px; }
+  .header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 6px;
+    background: linear-gradient(90deg, #58a6ff, #a371f7, #f778ba);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .header p { color: #8b949e; font-size: 0.95rem; margin: 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-decoration: none;
+    color: #e6edf3;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 130px;
+  }
+  .card:active { transform: scale(0.97); }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 0;
+  }
+  .card:hover::before, .card:active::before { opacity: 0.12; }
+  .card > * { position: relative; z-index: 1; }
+
+  .icon {
+    font-size: 1.9rem;
+    margin-bottom: 14px;
+    display: inline-block;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.08));
+  }
+  .card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  .card-sub {
+    font-size: 0.75rem;
+    color: #8b949e;
+    margin-top: 4px;
+  }
+
+  .c1 { border-color: #3fb95044; } .c1::before { background: #3fb950; }
+  .c2 { border-color: #f7788044; } .c2::before { background: #f77880; }
+  .c3 { border-color: #ff7b7244; } .c3::before { background: #ff7b72; }
+  .c4 { border-color: #58a6ff44; } .c4::before { background: #58a6ff; }
+  .c5 { border-color: #e3b34144; } .c5::before { background: #e3b341; }
+  .c6 { border-color: #a371f744; } .c6::before { background: #a371f7; }
+  .c7 { border-color: #39c5cf44; } .c7::before { background: #39c5cf; }
+  .c8 { border-color: #f0883e44; } .c8::before { background: #f0883e; }
+
+  .footer {
+    text-align: center;
+    color: #6e7681;
+    font-size: 0.75rem;
+    margin-top: 40px;
+  }
 </style>
 </head>
 <body>
-<h1>💰 My Finance Toolkit</h1>
-<a href="Ledger%20finance%20tracker.html">📒 Ledger Finance Tracker</a>
-<a href="Goal%20planner.html">🎯 Goal Planner</a>
-<a href="Debt%20engine.html">💳 Debt Engine</a>
-<a href="Retirement%20calculator.html">🏖️ Retirement Calculator</a>
-<a href="Gold%20calculator.html">🥇 Gold Calculator</a>
-<a href="Health%20insurance%20calculator.html">🏥 Health Insurance Calculator</a>
-<a href="Rolling%20returns%20calculator.html">📈 Rolling Returns Calculator</a>
-<a href="Swp%20calculator.html">🔁 SWP Calculator</a>
+
+<div class="header">
+  <h1>💰 My Finance Toolkit</h1>
+  <p>All your personal finance calculators in one place</p>
+</div>
+
+<div class="grid">
+  <a class="card c1" href="Ledger%20finance%20tracker.html">
+    <span class="icon">📒</span>
+    <div>
+      <div class="card-title">Ledger Finance Tracker</div>
+      <div class="card-sub">Track income & expenses</div>
+    </div>
+  </a>
+
+  <a class="card c2" href="Goal%20planner.html">
+    <span class="icon">🎯</span>
+    <div>
+      <div class="card-title">Goal Planner</div>
+      <div class="card-sub">Plan & track savings goals</div>
+    </div>
+  </a>
+
+  <a class="card c3" href="Debt%20engine.html">
+    <span class="icon">💳</span>
+    <div>
+      <div class="card-title">Debt Engine</div>
+      <div class="card-sub">Payoff strategy planner</div>
+    </div>
+  </a>
+
+  <a class="card c4" href="Retirement%20calculator.html">
+    <span class="icon">🏖️</span>
+    <div>
+      <div class="card-title">Retirement Calculator</div>
+      <div class="card-sub">Plan for the future</div>
+    </div>
+  </a>
+
+  <a class="card c5" href="Gold%20calculator.html">
+    <span class="icon">🥇</span>
+    <div>
+      <div class="card-title">Gold Calculator</div>
+      <div class="card-sub">Gold value & returns</div>
+    </div>
+  </a>
+
+  <a class="card c6" href="Health%20insurance%20calculator.html">
+    <span class="icon">🏥</span>
+    <div>
+      <div class="card-title">Health Insurance</div>
+      <div class="card-sub">Estimate coverage needs</div>
+    </div>
+  </a>
+
+  <a class="card c7" href="Rolling%20returns%20calculator.html">
+    <span class="icon">📈</span>
+    <div>
+      <div class="card-title">Rolling Returns</div>
+      <div class="card-sub">Investment performance</div>
+    </div>
+  </a>
+
+  <a class="card c8" href="Swp%20calculator.html">
+    <span class="icon">🔁</span>
+    <div>
+      <div class="card-title">SWP Calculator</div>
+      <div class="card-sub">Systematic withdrawal plan</div>
+    </div>
+  </a>
+</div>
+
+<div class="footer">Made with care · Personal Finance Toolkit</div>
+
 </body>
 </html>
+
