@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Route Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14110c;
+    --card:#1d1811;
+    --card-2:#241d13;
+    --hair:#3a3122;
+    --paper:#ede6d6;
+    --muted:#a89c86;
+    --gold:#c6a15b;
+    --gold-soft:#e8cd8f;
+    --steel:#7fa3c9;
+    --copper:#c98a67;
+    --good:#8faa7b;
+    --bad:#c07a6f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    padding:28px 18px 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;}
+
+  /* header */
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(28px,7vw,38px);
+    line-height:1.05;
+    margin:0 0 8px;
+    color:var(--paper);
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14.5px;
+    line-height:1.5;
+    margin:0 0 26px;
+    max-width:54ch;
+  }
+
+  /* input card */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .panel-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    font-size:13.5px;
+    color:var(--paper);
+    margin-bottom:8px;
+  }
+  .field label .val{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--gold-soft);
+    font-weight:600;
+  }
+  input[type=range]{
+    -webkit-appearance:none;
+    width:100%;
+    height:4px;
+    border-radius:2px;
+    background:var(--hair);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;height:18px;border-radius:50%;
+    background:var(--gold);
+    border:3px solid var(--ink);
+    box-shadow:0 0 0 1px var(--gold);
+    cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background:var(--gold);
+    border:3px solid var(--ink);
+    box-shadow:0 0 0 1px var(--gold);
+    cursor:pointer;
+  }
+  .assump-toggle{
+    background:none;border:1px solid var(--hair);color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+    padding:5px 10px;border-radius:20px;cursor:pointer;text-transform:uppercase;
+  }
+  .assump-toggle:hover{border-color:var(--gold);color:var(--gold-soft);}
+
+  .assump-grid{
+    display:none;
+    grid-template-columns:1fr 1fr;
+    gap:14px 16px;
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px dashed var(--hair);
+  }
+  .assump-grid.open{display:grid;}
+  .mini-field label{font-size:11.5px;color:var(--muted);margin-bottom:6px;display:block;}
+  .mini-field .val{font-family:'IBM Plex Mono',monospace;color:var(--gold-soft);font-weight:600;font-size:11.5px;}
+  .mini-field label span.name{color:var(--muted);}
+
+  /* results */
+  .result-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin:34px 0 14px;
+  }
+  .result-head h2{
+    font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0;color:var(--paper);
+  }
+  .result-head .horizon{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+
+  .route{
+    background:var(--card);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:18px 18px 6px;
+    margin-bottom:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .route::before{
+    content:'';
+    position:absolute;left:0;top:0;bottom:0;width:4px;
+    background:var(--accent);
+  }
+  .route-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+  .route-name{
+    font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--accent);
+  }
+  .route-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.08em;
+  }
+  .route-figure{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:26px;font-weight:600;color:var(--paper);
+    margin:6px 0 2px;
+  }
+  .route-figure sup{font-size:13px;color:var(--muted);font-weight:400;}
+  .route-delta{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .route-delta.best{color:var(--good);}
+
+  .ledger{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    border-top:1px dashed var(--hair);
+    padding:10px 0 4px;
+  }
+  .ledger-row{
+    display:flex;justify-content:space-between;
+    padding:3px 0;
+    color:var(--muted);
+  }
+  .ledger-row .neg{color:var(--bad);}
+  .ledger-row.total{
+    color:var(--paper);
+    border-top:1px solid var(--hair);
+    margin-top:4px;padding-top:7px;font-weight:600;
+  }
+
+  /* bar chart */
+  .chartcard{background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:20px;margin:18px 0;}
+  .chartcard h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 18px;}
+  .bar-row{margin-bottom:14px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;}
+  .bar-label .nm{color:var(--paper);font-weight:600;}
+  .bar-label .amt{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
+  .bar-track{background:var(--hair);height:10px;border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;transition:width .5s ease;}
+
+  /* compare table */
+  .compare{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
+  .compare th, .compare td{
+    text-align:left;padding:9px 8px;border-bottom:1px solid var(--hair);
+    vertical-align:top;
+  }
+  .compare th{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--muted);font-weight:600;
+  }
+  .compare td:first-child, .compare th:first-child{color:var(--muted);width:26%;}
+  .compare td.p{color:var(--gold-soft);}
+  .compare td.e{color:var(--steel);}
+  .compare td.d{color:var(--copper);}
+
+  .foot{
+    margin-top:26px;
+    font-size:11.5px;
+    color:var(--muted);
+    line-height:1.6;
+    border-top:1px solid var(--hair);
+    padding-top:16px;
+  }
+  .foot b{color:var(--paper);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Gold · Three Routes In</p>
+  <h1>Which gold route<br>actually pays off?</h1>
+  <p class="sub">Set an amount and a horizon. This weighs physical gold, a gold ETF, and digital gold against the same purchase — after making charges, GST, expense ratios and spreads — not just the headline gold price.</p>
+
+  <div class="panel">
+    <div class="panel-title">Your purchase</div>
+
+    <div class="field">
+      <label>Amount to invest <span class="val" id="amtVal">₹1,00,000</span></label>
+      <input type="range" id="amt" min="5000" max="1000000" step="5000" value="100000">
+    </div>
+
+    <div class="field">
+      <label>Holding period <span class="val" id="yrsVal">5 years</span></label>
+      <input type="range" id="yrs" min="1" max="20" step="1" value="5">
+    </div>
+
+    <div class="field">
+      <label>Expected gold price growth (CAGR) <span class="val" id="cagrVal">8%</span></label>
+      <input type="range" id="cagr" min="0" max="15" step="0.5" value="8">
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      Cost assumptions
+      <button class="assump-toggle" id="toggleAssump">Adjust</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted);">Defaults reflect typical Indian market ranges — edit if your dealer, broker or app differs.</div>
+    <div class="assump-grid" id="assumpGrid">
+      <div class="mini-field">
+        <label><span class="name">Physical — making charge</span> <span class="val" id="mkVal">12%</span></label>
+        <input type="range" id="mk" min="0" max="25" step="1" value="12">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">Physical — GST on purchase</span> <span class="val" id="gstPVal">3%</span></label>
+        <input type="range" id="gstP" min="0" max="5" step="0.5" value="3">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">Physical — resale haircut</span> <span class="val" id="resaleVal">8%</span></label>
+        <input type="range" id="resale" min="0" max="20" step="1" value="8">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">Physical — storage/insurance / yr</span> <span class="val" id="storeVal">0.5%</span></label>
+        <input type="range" id="store" min="0" max="3" step="0.1" value="0.5">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">ETF — expense ratio / yr</span> <span class="val" id="erVal">0.6%</span></label>
+        <input type="range" id="er" min="0" max="2" step="0.05" value="0.6">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">ETF — brokerage + STT (round trip)</span> <span class="val" id="brokVal">0.3%</span></label>
+        <input type="range" id="brok" min="0" max="2" step="0.05" value="0.3">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">Digital — buy/sell spread</span> <span class="val" id="spreadVal">4%</span></label>
+        <input type="range" id="spread" min="0" max="10" step="0.5" value="4">
+      </div>
+      <div class="mini-field">
+        <label><span class="name">Digital — GST on purchase</span> <span class="val" id="gstDVal">3%</span></label>
+        <input type="range" id="gstD" min="0" max="5" step="0.5" value="3">
+      </div>
+    </div>
+  </div>
+
+  <div class="result-head">
+    <h2>What you'd walk away with</h2>
+    <span class="horizon" id="horizonLabel">after 5 years</span>
+  </div>
+
+  <div class="route" style="--accent:var(--gold)">
+    <div class="route-top">
+      <div class="route-name">Physical Gold</div>
+      <div class="route-tag">Jewellery / coin / bar</div>
+    </div>
+    <div class="route-figure" id="physFig">₹0</div>
+    <div class="route-delta" id="physDelta"></div>
+    <div class="ledger" id="physLedger"></div>
+  </div>
+
+  <div class="route" style="--accent:var(--steel)">
+    <div class="route-top">
+      <div class="route-name">Gold ETF</div>
+      <div class="route-tag">Exchange-traded, demat</div>
+    </div>
+    <div class="route-figure" id="etfFig">₹0</div>
+    <div class="route-delta" id="etfDelta"></div>
+    <div class="ledger" id="etfLedger"></div>
+  </div>
+
+  <div class="route" style="--accent:var(--copper)">
+    <div class="route-top">
+      <div class="route-name">Digital Gold</div>
+      <div class="route-tag">App-based, vaulted</div>
+    </div>
+    <div class="route-figure" id="digFig">₹0</div>
+    <div class="route-delta" id="digDelta"></div>
+    <div class="ledger" id="digLedger"></div>
+  </div>
+
+  <div class="chartcard">
+    <h3>Net value, side by side</h3>
+    <div class="bar-row">
+      <div class="bar-label"><span class="nm">Physical</span><span class="amt" id="barPhysAmt"></span></div>
+      <div class="bar-track"><div class="bar-fill" id="barPhys" style="background:var(--gold);width:0%"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span class="nm">ETF</span><span class="amt" id="barEtfAmt"></span></div>
+      <div class="bar-track"><div class="bar-fill" id="barEtf" style="background:var(--steel);width:0%"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span class="nm">Digital</span><span class="amt" id="barDigAmt"></span></div>
+      <div class="bar-track"><div class="bar-fill" id="barDig" style="background:var(--copper);width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="chartcard">
+    <h3>Beyond the numbers</h3>
+    <table class="compare">
+      <tr><th>Trait</th><th>Physical</th><th>ETF</th><th>Digital</th></tr>
+      <tr><td>Purity risk</td><td class="p">Depends on dealer/hallmark</td><td class="e">None — fund-backed</td><td class="d">Backed by vault, insured</td></tr>
+      <tr><td>Storage worry</td><td class="p">Yours to secure</td><td class="e">None, held in demat</td><td class="d">None, held by provider</td></tr>
+      <tr><td>Liquidity</td><td class="p">Slowest, needs a buyer</td><td class="e">Instant, market hours</td><td class="d">Fast, in-app</td></tr>
+      <tr><td>Minimum ticket</td><td class="p">Often high (grams/coins)</td><td class="e">One unit (~1g)</td><td class="d">As low as ₹1</td></tr>
+      <tr><td>Can you touch it</td><td class="p">Yes, wearable/giftable</td><td class="e">No, paper claim</td><td class="d">Only if converted to coin</td></tr>
+      <tr><td>Loan against it</td><td class="p">Widely accepted collateral</td><td class="e">Rarely accepted directly</td><td class="d">Rarely accepted directly</td></tr>
+      <tr><td>Ongoing cost</td><td class="p">Storage/insurance if any</td><td class="e">Expense ratio, yearly</td><td class="d">Free short term, fee if held long past provider limit</td></tr>
+      <tr><td>Capital gains tax</td><td class="p">Same slab/LTCG rules apply across all three in India</td><td class="e">Same</td><td class="d">Same</td></tr>
+    </table>
+  </div>
+
+  <div class="foot">
+    <b>How this is calculated:</b> each route starts from your amount, deducts route-specific entry costs (making charges, GST, spread), grows the remainder at your chosen CAGR, then deducts ongoing costs (storage, expense ratio) each year and exit costs (resale haircut for physical) at the end. This is a planning estimate, not advice — real dealer premiums, fund tracking error, and app fees vary. Check current rates before buying, and treat this as a starting point for your own comparison, not a recommendation.
+  </div>
+
+</div>
+
+<script>
+function fmt(n){
+  n = Math.round(n);
+  return '₹' + n.toLocaleString('en-IN');
+}
+function fmtSigned(n){
+  n = Math.round(n);
+  return (n>=0?'+':'') + '₹' + n.toLocaleString('en-IN');
+}
+
+const el = id => document.getElementById(id);
+
+const amtInput = el('amt'), yrsInput = el('yrs'), cagrInput = el('cagr');
+const mkInput = el('mk'), gstPInput = el('gstP'), resaleInput = el('resale'), storeInput = el('store');
+const erInput = el('er'), brokInput = el('brok');
+const spreadInput = el('spread'), gstDInput = el('gstD');
+
+el('toggleAssump').addEventListener('click', ()=>{
+  el('assumpGrid').classList.toggle('open');
+});
+
+function recalc(){
+  const amount = +amtInput.value;
+  const years = +yrsInput.value;
+  const cagr = +cagrInput.value / 100;
+
+  const mk = +mkInput.value/100;
+  const gstP = +gstPInput.value/100;
+  const resale = +resaleInput.value/100;
+  const store = +storeInput.value/100;
+
+  const er = +erInput.value/100;
+  const brok = +brokInput.value/100;
+
+  const spread = +spreadInput.value/100;
+  const gstD = +gstDInput.value/100;
+
+  el('amtVal').textContent = fmt(amount);
+  el('yrsVal').textContent = years + (years===1 ? ' year' : ' years');
+  el('cagrVal').textContent = (+cagrInput.value) + '%';
+  el('horizonLabel').textContent = 'after ' + years + (years===1?' year':' years');
+  el('mkVal').textContent = (+mkInput.value)+'%';
+  el('gstPVal').textContent = (+gstPInput.value)+'%';
+  el('resaleVal').textContent = (+resaleInput.value)+'%';
+  el('storeVal').textContent = (+storeInput.value)+'%';
+  el('erVal').textContent = (+erInput.value)+'%';
+  el('brokVal').textContent = (+brokInput.value)+'%';
+  el('spreadVal').textContent = (+spreadInput.value)+'%';
+  el('gstDVal').textContent = (+gstDInput.value)+'%';
+
+  // ---- PHYSICAL ----
+  const physMkCost = amount * mk;
+  const physGstCost = amount * gstP;
+  let physGoldValue = amount - physMkCost - physGstCost;
+  const physEntryTotal = physMkCost + physGstCost;
+  let physStorageCostTotal = 0;
+  for(let y=0;y<years;y++){
+    physStorageCostTotal += physGoldValue * Math.pow(1+cagr,y) * store;
+  }
+  const physGrown = physGoldValue * Math.pow(1+cagr, years);
+  const physResaleCost = physGrown * resale;
+  const physFinal = physGrown - physStorageCostTotal - physResaleCost;
+
+  // ---- ETF ----
+  const etfEntryCost = amount * (brok/2); // buy-side portion of round trip
+  let etfValue = amount - etfEntryCost;
+  for(let y=0;y<years;y++){
+    etfValue = etfValue * (1+cagr) * (1-er);
+  }
+  const etfExitCost = etfValue * (brok/2);
+  const etfFinal = etfValue - etfExitCost;
+
+  // ---- DIGITAL ----
+  const digSpreadCost = amount * (spread/2);
+  const digGstCost = amount * gstD;
+  let digValue = amount - digSpreadCost - digGstCost;
+  const digGrown = digValue * Math.pow(1+cagr, years);
+  const digExitCost = digGrown * (spread/2);
+  const digFinal = digGrown - digExitCost;
+
+  // ---- render figures ----
+  el('physFig').innerHTML = fmt(physFinal);
+  el('etfFig').innerHTML = fmt(etfFinal);
+  el('digFig').innerHTML = fmt(digFinal);
+
+  const best = Math.max(physFinal, etfFinal, digFinal);
+  function deltaLabel(val){
+    if(val === best) return {text:'Best net outcome here', cls:'best'};
+    return {text: fmtSigned(val-best) + ' vs best route', cls:''};
+  }
+  const pd = deltaLabel(physFinal), ed = deltaLabel(etfFinal), dd = deltaLabel(digFinal);
+  el('physDelta').textContent = pd.text; el('physDelta').className = 'route-delta ' + pd.cls;
+  el('etfDelta').textContent = ed.text; el('etfDelta').className = 'route-delta ' + ed.cls;
+  el('digDelta').textContent = dd.text; el('digDelta').className = 'route-delta ' + dd.cls;
+
+  // ---- ledgers ----
+  el('physLedger').innerHTML = `
+    <div class="ledger-row"><span>Invested</span><span>${fmt(amount)}</span></div>
+    <div class="ledger-row"><span>Making charge (${(+mkInput.value)}%)</span><span class="neg">−${fmt(physMkCost)}</span></div>
+    <div class="ledger-row"><span>GST on purchase (${(+gstPInput.value)}%)</span><span class="neg">−${fmt(physGstCost)}</span></div>
+    <div class="ledger-row"><span>Grown at ${(+cagrInput.value)}% CAGR, ${years}y</span><span>${fmt(physGrown)}</span></div>
+    <div class="ledger-row"><span>Storage / insurance over ${years}y</span><span class="neg">−${fmt(physStorageCostTotal)}</span></div>
+    <div class="ledger-row"><span>Resale haircut (${(+resaleInput.value)}%)</span><span class="neg">−${fmt(physResaleCost)}</span></div>
+    <div class="ledger-row total"><span>Net in hand</span><span>${fmt(physFinal)}</span></div>
+  `;
+
+  el('etfLedger').innerHTML = `
+    <div class="ledger-row"><span>Invested</span><span>${fmt(amount)}</span></div>
+    <div class="ledger-row"><span>Buy-side brokerage/STT</span><span class="neg">−${fmt(etfEntryCost)}</span></div>
+    <div class="ledger-row"><span>Grown at ${(+cagrInput.value)}% CAGR, ${years}y, net of ${(+erInput.value)}% expense ratio/yr</span><span>${fmt(etfValue)}</span></div>
+    <div class="ledger-row"><span>Sell-side brokerage/STT</span><span class="neg">−${fmt(etfExitCost)}</span></div>
+    <div class="ledger-row total"><span>Net in hand</span><span>${fmt(etfFinal)}</span></div>
+  `;
+
+  el('digLedger').innerHTML = `
+    <div class="ledger-row"><span>Invested</span><span>${fmt(amount)}</span></div>
+    <div class="ledger-row"><span>Buy-side spread</span><span class="neg">−${fmt(digSpreadCost)}</span></div>
+    <div class="ledger-row"><span>GST on purchase (${(+gstDInput.value)}%)</span><span class="neg">−${fmt(digGstCost)}</span></div>
+    <div class="ledger-row"><span>Grown at ${(+cagrInput.value)}% CAGR, ${years}y</span><span>${fmt(digGrown)}</span></div>
+    <div class="ledger-row"><span>Sell-side spread</span><span class="neg">−${fmt(digExitCost)}</span></div>
+    <div class="ledger-row total"><span>Net in hand</span><span>${fmt(digFinal)}</span></div>
+  `;
+
+  // ---- bars ----
+  const maxVal = Math.max(physFinal, etfFinal, digFinal, 1);
+  el('barPhys').style.width = Math.max(2,(physFinal/maxVal*100)) + '%';
+  el('barEtf').style.width = Math.max(2,(etfFinal/maxVal*100)) + '%';
+  el('barDig').style.width = Math.max(2,(digFinal/maxVal*100)) + '%';
+  el('barPhysAmt').textContent = fmt(physFinal);
+  el('barEtfAmt').textContent = fmt(etfFinal);
+  el('barDigAmt').textContent = fmt(digFinal);
+}
+
+[amtInput,yrsInput,cagrInput,mkInput,gstPInput,resaleInput,storeInput,erInput,brokInput,spreadInput,gstDInput]
+  .forEach(inp => inp.addEventListener('input', recalc));
+
+recalc();
+</script>
+</body>
+</html>

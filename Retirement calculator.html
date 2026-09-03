@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B1F2E;
+    --panel: #12293B;
+    --panel-2: #16324A;
+    --panel-3: #0E2434;
+    --text: #EAE6DA;
+    --text-dim: #93A9B8;
+    --text-faint: #5D7385;
+    --gold: #C9A227;
+    --gold-bright: #E0BC48;
+    --teal: #59C1B3;
+    --danger: #E0796B;
+    --border: rgba(234,230,218,0.10);
+    --border-strong: rgba(234,230,218,0.20);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 48px;
+  }
+  .wrap{ max-width: 980px; margin: 0 auto; padding: 28px 18px; }
+
+  header.top{ margin-bottom: 28px; }
+  header.top .kicker{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--teal);
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+  }
+  header.top h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  header.top p{
+    color: var(--text-dim);
+    max-width: 58ch;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .layout{ display: grid; grid-template-columns: 1fr; gap: 22px; }
+  @media (min-width: 860px){
+    .layout{ grid-template-columns: 1.05fr 0.95fr; align-items: start; }
+    .results-col{ position: sticky; top: 24px; }
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card + .card{ margin-top: 18px; }
+
+  fieldset{ border: none; margin: 0 0 22px; padding: 0; }
+  fieldset:last-child{ margin-bottom: 0; }
+  legend{
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--gold-bright);
+    padding: 0 0 12px;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .field-row{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .field-row.single{ grid-template-columns: 1fr; }
+  @media (max-width: 480px){ .field-row{ grid-template-columns: 1fr; } }
+
+  label{
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .input-shell{
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--panel-3);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .input-shell:focus-within{ border-color: var(--teal); }
+  .input-shell .prefix, .input-shell .suffix{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-faint);
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  input[type=number]{
+    -moz-appearance: textfield;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    padding: 10px 8px;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin:0; }
+  .hint{ font-size: 12px; color: var(--text-faint); margin-top: 4px; }
+
+  .slider-row{ margin-bottom: 12px; }
+  .slider-row .slider-top{ display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider-row .slider-val{ font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--gold-bright); }
+  input[type=range]{
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--panel-3);
+    border: 1px solid var(--border-strong);
+    outline: none;
+    margin: 6px 0;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--teal);
+    border: 2px solid var(--bg);
+    cursor: pointer;
+    margin-top: -1px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--teal);
+    border: 2px solid var(--bg);
+    cursor: pointer;
+  }
+
+  /* Results panel */
+  .headline-result{
+    text-align: left;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .headline-result .label{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .headline-result .value{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(34px, 6vw, 46px);
+    color: var(--gold-bright);
+    line-height: 1.1;
+  }
+  .headline-result .sub{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  .stat-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .stat{
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .stat .stat-label{ font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .stat .stat-value{ font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: var(--text); }
+
+  .track-bar{ margin-bottom: 18px; }
+  .track-bar .track-label{ display:flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .track-outer{ height: 8px; background: var(--panel-3); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .track-inner{ height: 100%; background: linear-gradient(90deg, var(--teal), var(--gold)); border-radius: 6px; transition: width .4s ease; }
+
+  svg.chart{ width: 100%; height: auto; display:block; }
+  .chart-caption{ font-size: 12px; color: var(--text-faint); margin-top: 8px; }
+
+  .btn-row{ display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  button{
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--panel-2);
+    color: var(--text);
+  }
+  button.primary{ background: var(--gold); border-color: var(--gold); color: #14202A; }
+  button.primary:hover{ background: var(--gold-bright); }
+  button.ghost:hover{ border-color: var(--teal); color: var(--teal); }
+  button.danger-ghost{ background: transparent; border-color: transparent; color: var(--text-faint); padding: 6px 8px; font-size: 13px; }
+  button.danger-ghost:hover{ color: var(--danger); }
+
+  .saved-list{ margin-top: 10px; }
+  .saved-item{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .saved-item:last-child{ border-bottom: none; }
+  .saved-item .meta{ color: var(--text-faint); font-size: 12px; }
+  .saved-item .name-btn{ background: none; border: none; color: var(--text); text-align: left; padding: 0; font-size: 14px; cursor: pointer; }
+  .saved-item .name-btn:hover{ color: var(--teal); }
+  .saved-actions{ display:flex; gap: 6px; align-items:center; }
+  .empty-note{ color: var(--text-faint); font-size: 13px; padding: 6px 0; }
+
+  .save-status{ font-size: 12px; color: var(--text-faint); margin-top: 10px; min-height: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="kicker">Retirement calculator</div>
+    <h1>How much do you need, and are you on track?</h1>
+    <p>A goal-based retirement plan: define what you'll need, protect it against inflation for as long as you'll need it, and work backwards to the monthly investment that gets you there. Your numbers stay saved on this device between visits.</p>
+  </header>
+
+  <div class="layout">
+
+    <!-- INPUTS -->
+    <div class="inputs-col">
+
+      <div class="card">
+        <fieldset>
+          <legend>Time horizon</legend>
+          <div class="field-row">
+            <div>
+              <label for="currentAge">Your current age</label>
+              <div class="input-shell"><input type="number" id="currentAge" value="35" min="18" max="90"><span class="suffix">yrs</span></div>
+            </div>
+            <div>
+              <label for="retireAge">Target retirement age</label>
+              <div class="input-shell"><input type="number" id="retireAge" value="55" min="30" max="99"><span class="suffix">yrs</span></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label for="lifeExpectancy">Plan income until age</label>
+              <div class="input-shell"><input type="number" id="lifeExpectancy" value="90" min="60" max="105"><span class="suffix">yrs</span></div>
+            </div>
+          </div>
+          <div class="hint">Plan for the younger spouse's age, not your own life expectancy — running out of money late in retirement is the real risk.</div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Expenses &amp; inflation</legend>
+          <div class="field-row">
+            <div>
+              <label for="monthlyExpense">Current monthly expenses</label>
+              <div class="input-shell"><span class="prefix">₹</span><input type="number" id="monthlyExpense" value="50000" min="0" step="1000"></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label for="preInflation">Inflation before retirement</label>
+              <div class="input-shell"><input type="number" id="preInflation" value="6" min="0" max="15" step="0.5"><span class="suffix">% / yr</span></div>
+            </div>
+            <div>
+              <label for="postInflation">Inflation during retirement</label>
+              <div class="input-shell"><input type="number" id="postInflation" value="6" min="0" max="15" step="0.5"><span class="suffix">% / yr</span></div>
+            </div>
+          </div>
+          <div class="hint">Retirement income should rise every year with your expenses — a fixed pension quietly loses value.</div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Expected returns</legend>
+          <div class="field-row">
+            <div>
+              <label for="preReturn">Return while investing (pre-retirement)</label>
+              <div class="input-shell"><input type="number" id="preReturn" value="11" min="0" max="20" step="0.5"><span class="suffix">% / yr</span></div>
+            </div>
+            <div>
+              <label for="postReturn">Return during retirement</label>
+              <div class="input-shell"><input type="number" id="postReturn" value="7" min="0" max="20" step="0.5"><span class="suffix">% / yr</span></div>
+            </div>
+          </div>
+          <div class="hint">Post-tax, realistic figures — a lower, steadier return during retirement is safer than an optimistic one.</div>
+        </fieldset>
+
+        <fieldset>
+          <legend>What you already have</legend>
+          <div class="field-row">
+            <div>
+              <label for="existingCorpus">Existing retirement savings</label>
+              <div class="input-shell"><span class="prefix">₹</span><input type="number" id="existingCorpus" value="1500000" min="0" step="10000"></div>
+            </div>
+            <div>
+              <label for="existingSip">Current monthly investment</label>
+              <div class="input-shell"><span class="prefix">₹</span><input type="number" id="existingSip" value="10000" min="0" step="500"></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label for="epsContribution">Employer EPS contribution (monthly)</label>
+              <div class="input-shell"><span class="prefix">₹</span><input type="number" id="epsContribution" value="1250" min="0" step="100"></div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <div class="slider-top">
+              <label for="epsUntilAge" style="margin-bottom:0;">Contribute EPS until age</label>
+              <span class="slider-val" id="epsUntilAgeVal">55 yrs</span>
+            </div>
+            <input type="range" id="epsUntilAge" value="55" min="18" max="55" step="1">
+          </div>
+          <div class="hint">Your employer's EPS share (typically 8.33% of basic, capped near ₹1,250/mo). Contributions stop at this age — e.g. if you plan to leave employment for your own business — but whatever's built up keeps growing at your pre-retirement return rate until you retire.</div>
+        </fieldset>
+
+        <div class="save-status" id="saveStatus"></div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-col">
+      <div class="card">
+        <div class="headline-result">
+          <div class="label">Additional monthly investment needed</div>
+          <div class="value" id="resAdditionalSip">₹0</div>
+          <div class="sub" id="resTotalSipNote">on top of what you invest today</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-label">Corpus needed at retirement</div>
+            <div class="stat-value" id="resCorpusNeeded">₹0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Projected corpus, current path</div>
+            <div class="stat-value" id="resCorpusProjected">₹0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Monthly expense at retirement</div>
+            <div class="stat-value" id="resFutureExpense">₹0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Years to retirement / in retirement</div>
+            <div class="stat-value" id="resYears">0 / 0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Employer EPS grows to</div>
+            <div class="stat-value" id="resEpsProjected">₹0</div>
+          </div>
+        </div>
+
+        <div class="track-bar">
+          <div class="track-label"><span>On track</span><span id="trackPct">0%</span></div>
+          <div class="track-outer"><div class="track-inner" id="trackInner" style="width:0%"></div></div>
+        </div>
+
+        <div id="chartHolder"></div>
+        <div class="chart-caption">Projected corpus (teal) vs. corpus required at retirement (gold dashed line)</div>
+
+        <div class="btn-row">
+          <button class="primary" id="saveBtn">Save this plan</button>
+          <button class="ghost" id="resetBtn">Reset to defaults</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <fieldset style="margin-bottom:0;">
+          <legend>Saved plans</legend>
+          <div class="saved-list" id="savedList">
+            <div class="empty-note">No saved plans yet — adjust the numbers and save one.</div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const ids = ['currentAge','retireAge','lifeExpectancy','monthlyExpense','preInflation','postInflation','preReturn','postReturn','existingCorpus','existingSip','epsContribution','epsUntilAge'];
+  const els = {};
+  ids.forEach(id => els[id] = document.getElementById(id));
+
+  const fmtINR = n => {
+    if (!isFinite(n)) return '₹0';
+    n = Math.round(n);
+    const sign = n < 0 ? '-' : '';
+    n = Math.abs(n);
+    const s = n.toString();
+    let last3 = s.substring(s.length - 3);
+    let other = s.substring(0, s.length - 3);
+    if (other !== '') last3 = ',' + last3;
+    const formatted = other.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + last3;
+    return sign + '₹' + formatted;
+  };
+
+  function readInputs(){
+    const v = {};
+    ids.forEach(id => v[id] = parseFloat(els[id].value) || 0);
+    return v;
+  }
+
+  function writeInputs(v){
+    ids.forEach(id => { if (v[id] !== undefined) els[id].value = v[id]; });
+  }
+
+  function syncEpsSlider(v){
+    const min = v.currentAge, max = Math.max(v.retireAge, v.currentAge);
+    els.epsUntilAge.min = min;
+    els.epsUntilAge.max = max;
+    let val = parseFloat(els.epsUntilAge.value) || max;
+    val = Math.min(Math.max(val, min), max);
+    els.epsUntilAge.value = val;
+    document.getElementById('epsUntilAgeVal').textContent = Math.round(val) + ' yrs';
+    return val;
+  }
+
+  function compute(v){
+    const yearsToRetire = Math.max(v.retireAge - v.currentAge, 0);
+    const yearsInRetirement = Math.max(v.lifeExpectancy - v.retireAge, 0);
+    const preInf = v.preInflation / 100;
+    const postInf = v.postInflation / 100;
+    const preRet = v.preReturn / 100;
+    const postRet = v.postReturn / 100;
+
+    const futureMonthlyExpense = v.monthlyExpense * Math.pow(1 + preInf, yearsToRetire);
+    const annualExpenseAtRetirement = futureMonthlyExpense * 12;
+
+    // Corpus needed: PV of a growing annuity (payments grow with postInf,
+    // discounted at postRet), annuity-due since withdrawals happen at the
+    // start of each year of retirement.
+    let corpusNeeded;
+    if (yearsInRetirement <= 0) {
+      corpusNeeded = 0;
+    } else if (Math.abs(postRet - postInf) < 0.0001) {
+      corpusNeeded = annualExpenseAtRetirement * yearsInRetirement;
+    } else {
+      const ratio = (1 + postInf) / (1 + postRet);
+      corpusNeeded = annualExpenseAtRetirement * (1 - Math.pow(ratio, yearsInRetirement)) / (postRet - postInf) * (1 + postRet);
+    }
+
+    // Future value of existing lump sum
+    const fvExistingCorpus = v.existingCorpus * Math.pow(1 + preRet, yearsToRetire);
+
+    // Future value of existing monthly SIP (ordinary->due annuity, monthly compounding)
+    const months = yearsToRetire * 12;
+    const i = preRet / 12;
+    let fvExistingSip = 0;
+    let fvEps = 0;
+    const epsMonths = Math.min(Math.max((v.epsUntilAge - v.currentAge) * 12, 0), months);
+    const epsGrowthMonths = months - epsMonths;
+    if (months > 0) {
+      if (i === 0) {
+        fvExistingSip = v.existingSip * months;
+        fvEps = v.epsContribution * epsMonths;
+      } else {
+        const annuityFactor = ((Math.pow(1 + i, months) - 1) / i) * (1 + i);
+        fvExistingSip = v.existingSip * annuityFactor;
+        const epsAnnuityFactor = epsMonths > 0 ? ((Math.pow(1 + i, epsMonths) - 1) / i) * (1 + i) : 0;
+        fvEps = v.epsContribution * epsAnnuityFactor * Math.pow(1 + i, epsGrowthMonths);
+      }
+    }
+
+    const projectedCorpus = fvExistingCorpus + fvExistingSip + fvEps;
+    const shortfall = Math.max(corpusNeeded - projectedCorpus, 0);
+
+    let additionalSip = 0;
+    if (months > 0 && shortfall > 0) {
+      const annuityFactor = i === 0 ? months : ((Math.pow(1 + i, months) - 1) / i) * (1 + i);
+      additionalSip = shortfall / annuityFactor;
+    }
+
+    const trackPct = corpusNeeded > 0 ? Math.min((projectedCorpus / corpusNeeded) * 100, 999) : 100;
+
+    return {
+      yearsToRetire, yearsInRetirement, futureMonthlyExpense, corpusNeeded,
+      fvExistingCorpus, fvExistingSip, fvEps, projectedCorpus, shortfall, additionalSip, trackPct,
+      preRet, i, months
+    };
+  }
+
+  function buildChart(v, r){
+    const years = Math.max(Math.round(r.yearsToRetire), 1);
+    const points = [];
+    for (let y = 0; y <= years; y++){
+      const corpusY = v.existingCorpus * Math.pow(1 + r.preRet, y);
+      let sipY = 0;
+      let epsY = 0;
+      const m = y * 12;
+      const epsMonthsTotal = Math.min(Math.max((v.epsUntilAge - v.currentAge) * 12, 0), r.months);
+      if (m > 0){
+        sipY = r.i === 0 ? v.existingSip * m : v.existingSip * ((Math.pow(1 + r.i, m) - 1) / r.i) * (1 + r.i);
+        const epsMonthsY = Math.min(m, epsMonthsTotal);
+        const epsGrowthMonthsY = m - epsMonthsY;
+        if (r.i === 0) {
+          epsY = v.epsContribution * epsMonthsY;
+        } else {
+          const epsAnnuityFactorY = epsMonthsY > 0 ? ((Math.pow(1 + r.i, epsMonthsY) - 1) / r.i) * (1 + r.i) : 0;
+          epsY = v.epsContribution * epsAnnuityFactorY * Math.pow(1 + r.i, epsGrowthMonthsY);
+        }
+      }
+      points.push(corpusY + sipY + epsY);
+    }
+    const w = 560, h = 200, pad = 8;
+    const maxVal = Math.max(r.corpusNeeded, points[points.length-1], 1) * 1.08;
+    const xStep = (w - pad*2) / Math.max(years, 1);
+    const scaleY = val => h - pad - (val / maxVal) * (h - pad*2);
+
+    let path = '';
+    points.forEach((p, idx) => {
+      const x = pad + idx * xStep;
+      const y = scaleY(p);
+      path += (idx === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    });
+    const areaPath = path + `L${(pad + years*xStep).toFixed(1)},${(h-pad).toFixed(1)} L${pad},${(h-pad).toFixed(1)} Z`;
+    const needY = scaleY(r.corpusNeeded).toFixed(1);
+
+    return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${areaPath}" fill="rgba(89,193,179,0.14)" stroke="none"></path>
+      <path d="${path}" fill="none" stroke="#59C1B3" stroke-width="2.5"></path>
+      <line x1="${pad}" y1="${needY}" x2="${w-pad}" y2="${needY}" stroke="#C9A227" stroke-width="1.5" stroke-dasharray="5,5"></line>
+    </svg>`;
+  }
+
+  function render(){
+    const v = readInputs();
+    v.epsUntilAge = syncEpsSlider(v);
+    const r = compute(v);
+
+    document.getElementById('resAdditionalSip').textContent = fmtINR(r.additionalSip) + ' /mo';
+    document.getElementById('resTotalSipNote').textContent = r.shortfall > 0
+      ? `on top of your current ${fmtINR(v.existingSip)}/mo — total ${fmtINR(v.existingSip + r.additionalSip)}/mo`
+      : `you're already projected to meet this goal`;
+    document.getElementById('resCorpusNeeded').textContent = fmtINR(r.corpusNeeded);
+    document.getElementById('resCorpusProjected').textContent = fmtINR(r.projectedCorpus);
+    document.getElementById('resFutureExpense').textContent = fmtINR(r.futureMonthlyExpense) + '/mo';
+    document.getElementById('resYears').textContent = `${Math.round(r.yearsToRetire)} / ${Math.round(r.yearsInRetirement)}`;
+    document.getElementById('resEpsProjected').textContent = fmtINR(r.fvEps);
+
+    const pctDisplay = Math.min(r.trackPct, 100);
+    document.getElementById('trackInner').style.width = pctDisplay.toFixed(0) + '%';
+    document.getElementById('trackPct').textContent = Math.round(r.trackPct) + '%';
+
+    document.getElementById('chartHolder').innerHTML = buildChart(v, r);
+
+    scheduleAutosave(v);
+  }
+
+  ids.forEach(id => els[id].addEventListener('input', render));
+
+  // ---------- Storage ----------
+  const statusEl = document.getElementById('saveStatus');
+  let autosaveTimer = null;
+
+  function scheduleAutosave(v){
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(async () => {
+      try {
+        await window.storage.set('inputs:last', JSON.stringify(v), false);
+        statusEl.textContent = 'Saved automatically';
+        setTimeout(() => { if (statusEl.textContent === 'Saved automatically') statusEl.textContent = ''; }, 1800);
+      } catch (e) {
+        statusEl.textContent = 'Could not autosave';
+      }
+    }, 500);
+  }
+
+  async function loadLastInputs(){
+    try {
+      const res = await window.storage.get('inputs:last', false);
+      if (res && res.value) {
+        writeInputs(JSON.parse(res.value));
+      }
+    } catch (e) {
+      // no saved inputs yet — defaults stay
+    }
+  }
+
+  async function refreshSavedList(){
+    const listEl = document.getElementById('savedList');
+    try {
+      const listRes = await window.storage.list('plan:', false);
+      const keys = (listRes && listRes.keys) || [];
+      if (keys.length === 0) {
+        listEl.innerHTML = '<div class="empty-note">No saved plans yet — adjust the numbers and save one.</div>';
+        return;
+      }
+      const items = [];
+      for (const k of keys) {
+        try {
+          const res = await window.storage.get(k, false);
+          if (res && res.value) items.push({ key: k, data: JSON.parse(res.value) });
+        } catch (e) { /* skip unreadable entry */ }
+      }
+      items.sort((a, b) => (b.data.savedAt || 0) - (a.data.savedAt || 0));
+      listEl.innerHTML = items.map(item => {
+        const date = item.data.savedAt ? new Date(item.data.savedAt).toLocaleDateString() : '';
+        const safeName = (item.data.name || 'Untitled plan').replace(/</g, '&lt;');
+        return `<div class="saved-item">
+          <div>
+            <button class="name-btn" data-key="${item.key}">${safeName}</button>
+            <div class="meta">${date}</div>
+          </div>
+          <div class="saved-actions">
+            <button class="danger-ghost" data-delete="${item.key}">Remove</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('[data-key]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const res = await window.storage.get(btn.getAttribute('data-key'), false);
+          if (res && res.value) {
+            const parsed = JSON.parse(res.value);
+            writeInputs(parsed.inputs);
+            render();
+          }
+        });
+      });
+      listEl.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await window.storage.delete(btn.getAttribute('data-delete'), false);
+            refreshSavedList();
+          } catch (e) { /* ignore */ }
+        });
+      });
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty-note">No saved plans yet — adjust the numbers and save one.</div>';
+    }
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const name = prompt('Name this plan (e.g. "Base case", "Early retirement at 50"):', 'My retirement plan');
+    if (!name) return;
+    const v = readInputs();
+    const key = 'plan:' + Date.now();
+    try {
+      await window.storage.set(key, JSON.stringify({ name, inputs: v, savedAt: Date.now() }), false);
+      statusEl.textContent = 'Plan saved';
+      refreshSavedList();
+    } catch (e) {
+      statusEl.textContent = 'Could not save plan';
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    writeInputs({
+      currentAge: 35, retireAge: 55, lifeExpectancy: 90, monthlyExpense: 50000,
+      preInflation: 6, postInflation: 6, preReturn: 11, postReturn: 7,
+      existingCorpus: 1500000, existingSip: 10000, epsContribution: 1250, epsUntilAge: 55
+    });
+    render();
+  });
+
+  // init
+  (async () => {
+    await loadLastInputs();
+    render();
+    refreshSavedList();
+  })();
+})();
+</script>
+</body>
+</html>

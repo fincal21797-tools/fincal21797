@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rolling Returns Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#132B2A;
+    --ink-2:#1E403D;
+    --paper:#F5F6F1;
+    --paper-2:#EAECE3;
+    --card:#FFFFFF;
+    --line:#DBDECF;
+    --gain:#1F7A5C;
+    --gain-soft:#E4F1EA;
+    --loss:#A6432D;
+    --loss-soft:#F5E7E1;
+    --gold:#B9862F;
+    --text:#1B2523;
+    --text-soft:#5B655F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-feature-settings:"tnum" 1;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:0 0 60px;}
+  header.hero{
+    background:var(--ink);
+    color:var(--paper);
+    padding:36px 22px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.hero::after{
+    content:"";
+    position:absolute;
+    right:-60px;top:-60px;
+    width:220px;height:220px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(185,134,47,0.25), transparent 70%);
+  }
+  header.hero h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.7rem;
+    line-height:1.25;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+    max-width:20ch;
+  }
+  header.hero p{
+    margin:0;
+    font-size:0.95rem;
+    line-height:1.55;
+    color:#C9D6D0;
+    max-width:46ch;
+  }
+  header.hero .credit{
+    margin-top:16px;
+    font-size:0.82rem;
+    color:#8FA69E;
+  }
+
+  section{padding:26px 22px;border-bottom:1px solid var(--line);}
+  h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.15rem;
+    margin:0 0 4px;
+    color:var(--ink-2);
+  }
+  .section-note{
+    font-size:0.85rem;
+    color:var(--text-soft);
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+
+  label{
+    display:block;
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--text-soft);
+    margin-bottom:6px;
+    margin-top:16px;
+  }
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=number], textarea, select{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:0.95rem;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--card);
+    color:var(--text);
+  }
+  textarea{
+    min-height:110px;
+    resize:vertical;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.82rem;
+    line-height:1.5;
+  }
+  select{appearance:none;background-image:linear-gradient(45deg, transparent 50%, var(--text-soft) 50%), linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%;background-size:5px 5px, 5px 5px;background-repeat:no-repeat;}
+
+  .row{display:flex;gap:12px;}
+  .row > div{flex:1;}
+
+  .filebtn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:0.82rem;font-weight:600;color:var(--ink-2);
+    border:1px solid var(--line);background:var(--card);
+    padding:8px 14px;border-radius:6px;cursor:pointer;
+  }
+  .ghost-btn{
+    display:inline-flex;align-items:center;
+    font-size:0.82rem;font-weight:600;color:var(--text-soft);
+    background:none;border:none;text-decoration:underline;
+    cursor:pointer;padding:0;margin-left:14px;
+  }
+  .filerow{display:flex;align-items:center;margin-top:10px;flex-wrap:wrap;row-gap:8px;}
+  #fileInput{display:none;}
+  #fileName{font-size:0.8rem;color:var(--text-soft);margin-left:10px;}
+
+  button.primary{
+    width:100%;
+    margin-top:22px;
+    padding:13px 16px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:6px;
+    font-size:0.95rem;
+    font-weight:600;
+    font-family:'IBM Plex Sans', sans-serif;
+    cursor:pointer;
+  }
+  button.primary:active{background:var(--ink-2);}
+
+  #errorBox{
+    display:none;
+    margin-top:14px;
+    padding:12px 14px;
+    background:var(--loss-soft);
+    color:var(--loss);
+    border-radius:6px;
+    font-size:0.85rem;
+    line-height:1.5;
+  }
+
+  #results{display:none;}
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .stat-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 14px 12px;
+  }
+  .stat-card .label{
+    font-size:0.72rem;
+    font-weight:600;
+    text-transform:none;
+    color:var(--text-soft);
+    margin-bottom:4px;
+  }
+  .stat-card .value{
+    font-family:'Fraunces', serif;
+    font-size:1.5rem;
+    font-weight:500;
+  }
+  .stat-card .value.gain{color:var(--gain);}
+  .stat-card .value.loss{color:var(--loss);}
+
+  .chart-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 14px 10px;
+    margin-top:16px;
+  }
+  .chart-card h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1rem;
+    margin:0 0 2px;
+  }
+  .chart-card .sub{font-size:0.78rem;color:var(--text-soft);margin-bottom:12px;}
+  canvas{max-width:100%;}
+
+  table.pct-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    font-size:0.85rem;
+  }
+  table.pct-table th, table.pct-table td{
+    padding:8px 6px;
+    text-align:right;
+    border-bottom:1px solid var(--line);
+  }
+  table.pct-table th:first-child, table.pct-table td:first-child{text-align:left;}
+  table.pct-table th{
+    font-weight:600;
+    color:var(--text-soft);
+    font-size:0.72rem;
+  }
+
+  .callout{
+    margin-top:16px;
+    padding:14px;
+    border-radius:8px;
+    background:var(--paper-2);
+    font-size:0.85rem;
+    line-height:1.55;
+    color:var(--ink-2);
+  }
+  .callout b{color:var(--ink);}
+
+  footer{
+    padding:20px 22px 0;
+    font-size:0.75rem;
+    color:var(--text-soft);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Rolling Returns Calculator</h1>
+    <p>Point-to-point returns depend entirely on the day you happened to invest. Rolling returns show every possible entry point at once, so you see how consistent — or lucky-dependent — a fund's performance really is.</p>
+    <div class="credit">Methodology inspired by M. Pattabiraman (freefincal)</div>
+  </header>
+
+  <section>
+    <h2>1. Fund NAV data</h2>
+    <p class="section-note">Paste date,NAV rows (one per line) or upload a CSV. Dates can be YYYY-MM-DD, DD-MM-YYYY, or MM/DD/YYYY. No historical NAV data on hand? Load sample data to try the tool first.</p>
+
+    <label for="fundName">Fund / scheme name (optional)</label>
+    <input type="text" id="fundName" placeholder="e.g. HDFC Flexi Cap Fund">
+
+    <label for="navInput">NAV history (date, NAV)</label>
+    <textarea id="navInput" placeholder="2015-01-01, 42.15
+2015-01-02, 42.30
+2015-01-05, 41.98
+..."></textarea>
+
+    <div class="filerow">
+      <label class="filebtn" for="fileInput">Upload CSV
+        <input type="file" id="fileInput" accept=".csv,.txt">
+      </label>
+      <span id="fileName"></span>
+      <button class="ghost-btn" id="sampleBtn">Load sample data instead</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Rolling window</h2>
+    <p class="section-note">Choose the holding period. Every date in your data becomes a hypothetical entry point held for exactly this long.</p>
+    <div class="row">
+      <div>
+        <label for="periodSelect">Holding period</label>
+        <select id="periodSelect">
+          <option value="0.5">6 months</option>
+          <option value="1">1 year</option>
+          <option value="3" selected>3 years</option>
+          <option value="5">5 years</option>
+          <option value="7">7 years</option>
+          <option value="10">10 years</option>
+          <option value="15">15 years</option>
+        </select>
+      </div>
+      <div>
+        <label for="threshold">Compare against (%)</label>
+        <input type="number" id="threshold" value="12" step="0.5">
+      </div>
+    </div>
+    <button class="primary" id="calcBtn">Calculate rolling returns</button>
+    <div id="errorBox"></div>
+  </section>
+
+  <section id="results">
+    <h2>3. Results</h2>
+    <p class="section-note" id="resultsNote"></p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Average rolling CAGR</div><div class="value" id="statAvg">—</div></div>
+      <div class="stat-card"><div class="label">Median rolling CAGR</div><div class="value" id="statMedian">—</div></div>
+      <div class="stat-card"><div class="label">Minimum</div><div class="value" id="statMin">—</div></div>
+      <div class="stat-card"><div class="label">Maximum</div><div class="value" id="statMax">—</div></div>
+      <div class="stat-card"><div class="label">Volatility (std dev)</div><div class="value" id="statStd">—</div></div>
+      <div class="stat-card"><div class="label">% periods negative</div><div class="value" id="statNeg">—</div></div>
+    </div>
+
+    <div class="callout" id="thresholdCallout"></div>
+
+    <div class="chart-card">
+      <h3>Rolling CAGR over time</h3>
+      <div class="sub">Each point = CAGR if you had invested on that date and held for the selected period</div>
+      <canvas id="lineChart" height="220"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Distribution of outcomes</h3>
+      <div class="sub">How often each return range occurred across all rolling periods</div>
+      <canvas id="histChart" height="220"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Percentile breakdown</h3>
+      <table class="pct-table" id="pctTable">
+        <thead><tr><th>Percentile</th><th>CAGR</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Rolling CAGR is computed between each NAV date and the next available NAV on or after (date + holding period), using the actual elapsed time. This is an educational tool, not investment advice — always verify figures against the AMC's official factsheet before making decisions.
+  </footer>
+
+</div>
+
+<script>
+let chartData = null;
+let lineChart, histChart;
+
+function parseDate(str){
+  str = str.trim();
+  let m;
+  if(m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)){
+    return new Date(+m[1], +m[2]-1, +m[3]);
+  }
+  if(m = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)){
+    return new Date(+m[3], +m[2]-1, +m[1]);
+  }
+  if(m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)){
+    return new Date(+m[3], +m[1]-1, +m[2]);
+  }
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const rows = [];
+  for(const line of lines){
+    const parts = line.split(/,|\t/).map(p => p.trim()).filter(Boolean);
+    if(parts.length < 2) continue;
+    const date = parseDate(parts[0]);
+    const nav = parseFloat(parts[1]);
+    if(!date || isNaN(nav)) continue;
+    rows.push({date, nav});
+  }
+  rows.sort((a,b) => a.date - b.date);
+  // de-duplicate identical dates, keep last
+  const dedup = [];
+  for(const r of rows){
+    if(dedup.length && dedup[dedup.length-1].date.getTime() === r.date.getTime()){
+      dedup[dedup.length-1] = r;
+    } else {
+      dedup.push(r);
+    }
+  }
+  return dedup;
+}
+
+function generateSample(){
+  const start = new Date(2010,0,1);
+  const end = new Date(2025,7,1);
+  const rows = [];
+  let nav = 25;
+  let d = new Date(start);
+  let t = 0;
+  // weekly points, random walk with drift + occasional drawdowns
+  while(d <= end){
+    const driftAnnual = 0.13;
+    const volAnnual = 0.19;
+    const dt = 7/365.25;
+    const drift = driftAnnual*dt;
+    const shock = (Math.random()+Math.random()+Math.random()+Math.random()-2)/2; // approx normal
+    const ret = drift + shock*volAnnual*Math.sqrt(dt);
+    nav = nav*(1+ret);
+    if(Math.random() < 0.003) nav *= (0.80 + Math.random()*0.08); // rare shock, e.g. 2020/2008-like
+    rows.push({date:new Date(d), nav: +nav.toFixed(4)});
+    d.setDate(d.getDate()+7);
+    t++;
+  }
+  return rows;
+}
+
+function rowsToText(rows){
+  return rows.map(r => `${r.date.toISOString().slice(0,10)}, ${r.nav}`).join('\n');
+}
+
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  const rows = generateSample();
+  document.getElementById('navInput').value = rowsToText(rows);
+  document.getElementById('fundName').value = document.getElementById('fundName').value || 'Sample Fund (synthetic data)';
+  document.getElementById('fileName').textContent = '';
+});
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  document.getElementById('fileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('navInput').value = ev.target.result;
+  };
+  reader.readAsText(file);
+});
+
+function daysBetween(d1,d2){
+  return (d2 - d1) / (1000*60*60*24);
+}
+
+function computeRolling(data, periodYears){
+  const periodDays = periodYears * 365.25;
+  const out = [];
+  let j = 0;
+  for(let i=0;i<data.length;i++){
+    const targetTime = data[i].date.getTime() + periodDays*86400000;
+    if(j < i) j = i;
+    while(j < data.length && data[j].date.getTime() < targetTime) j++;
+    if(j >= data.length) break;
+    // tolerance: end date shouldn't be wildly past target (allow up to periodDays*0.15 slack for sparse data)
+    const slackDays = Math.max(20, periodDays*0.15);
+    if(daysBetween(new Date(targetTime), data[j].date) > slackDays) continue;
+    const yearsElapsed = daysBetween(data[i].date, data[j].date) / 365.25;
+    if(yearsElapsed <= 0) continue;
+    const cagr = Math.pow(data[j].nav / data[i].nav, 1/yearsElapsed) - 1;
+    out.push({start:data[i].date, end:data[j].date, cagr:cagr*100});
+  }
+  return out;
+}
+
+function pct(arr, p){
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const idx = (sorted.length-1)*p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  if(lo===hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi]-sorted[lo])*(idx-lo);
+}
+
+function fmt(n){
+  return (n>=0?'+':'') + n.toFixed(2) + '%';
+}
+
+function showError(msg){
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+}
+
+function hideError(){
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+document.getElementById('calcBtn').addEventListener('click', () => {
+  hideError();
+  const raw = document.getElementById('navInput').value;
+  const data = parseCSV(raw);
+  const periodYears = parseFloat(document.getElementById('periodSelect').value);
+  const threshold = parseFloat(document.getElementById('threshold').value);
+
+  if(data.length < 5){
+    showError('Need at least a handful of valid date, NAV rows. Check the format — one "date, NAV" pair per line.');
+    return;
+  }
+
+  const spanYears = daysBetween(data[0].date, data[data.length-1].date)/365.25;
+  if(spanYears < periodYears){
+    showError(`Your data spans about ${spanYears.toFixed(1)} years, which is shorter than the ${periodYears}-year holding period. Choose a shorter period or add more data.`);
+    return;
+  }
+
+  const rolling = computeRolling(data, periodYears);
+  if(rolling.length < 3){
+    showError('Not enough rolling periods could be computed. Try a shorter holding period or check your NAV dates are in order.');
+    return;
+  }
+
+  renderResults(rolling, periodYears, threshold, data);
+});
+
+function renderResults(rolling, periodYears, threshold, data){
+  const cagrs = rolling.map(r => r.cagr);
+  const avg = cagrs.reduce((a,b)=>a+b,0)/cagrs.length;
+  const median = pct(cagrs, 0.5);
+  const min = Math.min(...cagrs);
+  const max = Math.max(...cagrs);
+  const variance = cagrs.reduce((a,b)=>a+(b-avg)*(b-avg),0)/cagrs.length;
+  const std = Math.sqrt(variance);
+  const negPct = 100*cagrs.filter(c=>c<0).length/cagrs.length;
+  const belowThreshold = 100*cagrs.filter(c=>c<threshold).length/cagrs.length;
+
+  const fundName = document.getElementById('fundName').value.trim() || 'This fund';
+  document.getElementById('resultsNote').textContent =
+    `${fundName} — ${rolling.length} overlapping ${periodYears}-year holding periods, from ${rolling[0].start.toISOString().slice(0,10)} to ${rolling[rolling.length-1].start.toISOString().slice(0,10)}.`;
+
+  document.getElementById('statAvg').textContent = fmt(avg);
+  document.getElementById('statAvg').className = 'value ' + (avg>=0?'gain':'loss');
+  document.getElementById('statMedian').textContent = fmt(median);
+  document.getElementById('statMedian').className = 'value ' + (median>=0?'gain':'loss');
+  document.getElementById('statMin').textContent = fmt(min);
+  document.getElementById('statMin').className = 'value ' + (min>=0?'gain':'loss');
+  document.getElementById('statMax').textContent = fmt(max);
+  document.getElementById('statMax').className = 'value ' + (max>=0?'gain':'loss');
+  document.getElementById('statStd').textContent = std.toFixed(2)+' pts';
+  document.getElementById('statNeg').textContent = negPct.toFixed(1)+'%';
+  document.getElementById('statNeg').className = 'value ' + (negPct>0?'loss':'gain');
+
+  document.getElementById('thresholdCallout').innerHTML =
+    `Over these ${rolling.length} rolling windows, returns fell short of your <b>${threshold}%</b> benchmark <b>${belowThreshold.toFixed(1)}%</b> of the time. ` +
+    (belowThreshold > 40
+      ? `That's a fairly high miss-rate — this fund's consistency against that bar has been mixed.`
+      : `That's a relatively low miss-rate — this fund has cleared that bar fairly consistently.`);
+
+  // Line chart
+  const ctx1 = document.getElementById('lineChart').getContext('2d');
+  if(lineChart) lineChart.destroy();
+  lineChart = new Chart(ctx1, {
+    type:'line',
+    data:{
+      labels: rolling.map(r => r.start.toISOString().slice(0,10)),
+      datasets:[
+        {
+          label:`${periodYears}Y rolling CAGR`,
+          data: cagrs,
+          borderColor:'#1E403D',
+          backgroundColor:'rgba(30,64,61,0.08)',
+          pointRadius:0,
+          borderWidth:1.6,
+          fill:true,
+          tension:0.05
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label: (c)=> fmt(c.parsed.y)}}
+      },
+      scales:{
+        x:{ticks:{maxTicksLimit:6, font:{size:10}}, grid:{display:false}},
+        y:{ticks:{callback:(v)=>v+'%', font:{size:10}}, grid:{color:'#EAECE3'}}
+      }
+    }
+  });
+
+  // Histogram
+  const binSize = Math.max(1, Math.round((max-min)/12));
+  const binStart = Math.floor(min/binSize)*binSize;
+  const binCount = Math.ceil((max-binStart)/binSize)+1;
+  const bins = new Array(binCount).fill(0);
+  cagrs.forEach(c => {
+    let idx = Math.floor((c-binStart)/binSize);
+    if(idx<0) idx=0;
+    if(idx>=binCount) idx=binCount-1;
+    bins[idx]++;
+  });
+  const binLabels = bins.map((_,i)=>{
+    const lo = binStart+i*binSize;
+    return `${lo}%`;
+  });
+  const ctx2 = document.getElementById('histChart').getContext('2d');
+  if(histChart) histChart.destroy();
+  histChart = new Chart(ctx2, {
+    type:'bar',
+    data:{
+      labels: binLabels,
+      datasets:[{
+        data: bins,
+        backgroundColor: bins.map((_,i)=> (binStart+i*binSize) < 0 ? '#A6432D' : '#1F7A5C')
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{maxTicksLimit:8, font:{size:9}}, grid:{display:false}},
+        y:{ticks:{font:{size:10}}, grid:{color:'#EAECE3'}, title:{display:true,text:'periods',font:{size:10}}}
+      }
+    }
+  });
+
+  // Percentile table
+  const tbody = document.querySelector('#pctTable tbody');
+  tbody.innerHTML = '';
+  [0.05,0.10,0.25,0.50,0.75,0.90,0.95].forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${Math.round(p*100)}th</td><td>${fmt(pct(cagrs,p))}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+</body>
+</html>

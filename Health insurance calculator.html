@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Health Insurance: Yearly vs One-Time</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #F5F3EE;
+    --panel: #FFFFFF;
+    --ink: #16302B;
+    --ink-soft: #5B6E68;
+    --teal: #1F5F5B;
+    --teal-deep: #123B39;
+    --amber: #C97A2B;
+    --line: #DDD8CC;
+    --good: #1F5F5B;
+    --bad: #B24B32;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:980px;margin:0 auto;}
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,40px);
+    margin:0 0 8px;
+    color:var(--teal-deep);
+    line-height:1.1;
+  }
+  .sub{color:var(--ink-soft);font-size:15px;max-width:560px;line-height:1.5;}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    gap:20px;
+  }
+  @media (max-width:760px){ .grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:24px;
+  }
+  .card h2{
+    font-family:'Fraunces',serif;
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 18px;
+    color:var(--teal-deep);
+  }
+  .field{margin-bottom:20px;}
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:8px;
+  }
+  .field label span.val{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--teal);
+    font-weight:600;
+  }
+  input[type=range]{
+    width:100%;
+    accent-color:var(--teal);
+    height:4px;
+  }
+  input[type=number]{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--ink);
+    background:#FBFAF7;
+  }
+  input[type=number]:focus, input[type=range]:focus{outline:2px solid var(--teal); outline-offset:2px;}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+  .result-hero{
+    background:linear-gradient(155deg, var(--teal-deep), var(--teal));
+    color:#F5F3EE;
+    border-radius:14px;
+    padding:26px 28px;
+    margin-bottom:20px;
+  }
+  .result-hero .eyebrow{color:#CFE8DD;}
+  .result-hero .verdict{
+    font-family:'Fraunces',serif;
+    font-size:clamp(22px,3vw,28px);
+    font-weight:600;
+    margin:2px 0 6px;
+  }
+  .result-hero .verdict b{color:#F2C185;}
+  .result-hero .detail{font-size:14px;color:#D9EAE4;line-height:1.5;}
+
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .stat .label{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .stat .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--teal-deep);}
+  .stat.bad .num{color:var(--bad);}
+
+  .chart-card .chart-legend{
+    display:flex;gap:18px;font-size:12px;color:var(--ink-soft);margin-bottom:14px;
+  }
+  .chart-legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  tr.breakeven{background:#FDF1E2;}
+  tr.breakeven td:first-child{font-weight:700;color:var(--amber);}
+
+  footer{margin-top:30px;font-size:12px;color:var(--ink-soft);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Coverage cost planner</div>
+    <h1>Yearly premium vs. one‑time payment</h1>
+    <p class="sub">Medical costs rise every year. See how a rising yearly premium stacks up against a single upfront payment over time — and find the year they cross.</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Your numbers</h2>
+
+      <div class="field">
+        <label>Yearly premium (year 1) <span class="val" id="yv">₹25,000</span></label>
+        <input type="range" id="yearly" min="1000" max="500000" step="500" value="25000">
+        <input type="number" id="yearlyNum" value="25000" style="margin-top:8px;">
+      </div>
+
+      <div class="field">
+        <label>One‑time payment <span class="val" id="ov">₹150,000</span></label>
+        <input type="range" id="onetime" min="1000" max="3000000" step="1000" value="150000">
+        <input type="number" id="onetimeNum" value="150000" style="margin-top:8px;">
+        <div class="hint">e.g. a single lump‑sum / lifetime cover payment.</div>
+      </div>
+
+      <div class="field">
+        <label>Medical inflation rate <span class="val" id="iv">8%</span></label>
+        <input type="range" id="inflation" min="0" max="25" step="0.5" value="8">
+      </div>
+
+      <div class="field">
+        <label>Years to compare <span class="val" id="nv">20 yrs</span></label>
+        <input type="range" id="years" min="1" max="40" step="1" value="20">
+      </div>
+    </div>
+
+    <div>
+      <div class="result-hero" id="hero">
+        <div class="eyebrow">Result</div>
+        <div class="verdict" id="verdictText">—</div>
+        <div class="detail" id="verdictDetail">—</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <div class="label">Total paid — yearly plan</div>
+          <div class="num" id="totalYearly">₹0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Total paid — one‑time</div>
+          <div class="num" id="totalOnetime">₹0</div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <h2>Cumulative cost over time</h2>
+        <div class="chart-legend">
+          <span><i class="dot" style="background:var(--teal)"></i>Yearly plan (cumulative)</span>
+          <span><i class="dot" style="background:var(--amber)"></i>One‑time payment</span>
+        </div>
+        <svg id="chart" viewBox="0 0 640 260" style="width:100%;height:auto;"></svg>
+        <table id="yearTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    This is a simple planning aid, not financial or insurance advice — real premiums also depend on age, claims, plan changes and insurer repricing beyond pure medical inflation. Figures shown in ₹ but the tool works in any currency; just read the numbers as your own units.
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+
+const yearly = $('yearly'), yearlyNum = $('yearlyNum');
+const onetime = $('onetime'), onetimeNum = $('onetimeNum');
+const inflation = $('inflation'), years = $('years');
+
+function syncPair(range, num){
+  range.addEventListener('input', ()=>{ num.value = range.value; compute(); });
+  num.addEventListener('input', ()=>{
+    let v = Number(num.value)||0;
+    range.value = Math.min(Math.max(v, Number(range.min)), Number(range.max));
+    compute();
+  });
+}
+syncPair(yearly, yearlyNum);
+syncPair(onetime, onetimeNum);
+inflation.addEventListener('input', compute);
+years.addEventListener('input', compute);
+
+function compute(){
+  const y0 = Number(yearlyNum.value)||0;
+  const lump = Number(onetimeNum.value)||0;
+  const rate = Number(inflation.value)/100;
+  const n = Number(years.value);
+
+  $('yv').textContent = fmt(y0);
+  $('ov').textContent = fmt(lump);
+  $('iv').textContent = inflation.value + '%';
+  $('nv').textContent = n + ' yrs';
+
+  let cum = 0;
+  const rows = [];
+  let breakevenYear = null;
+  for(let i=1;i<=n;i++){
+    const premium = y0 * Math.pow(1+rate, i-1);
+    cum += premium;
+    if(breakevenYear===null && cum >= lump) breakevenYear = i;
+    rows.push({year:i, premium, cum});
+  }
+  const totalYearly = cum;
+
+  $('totalYearly').textContent = fmt(totalYearly);
+  $('totalOnetime').textContent = fmt(lump);
+  document.querySelector('.stat:nth-child(1)').classList.toggle('bad', totalYearly > lump);
+  document.querySelector('.stat:nth-child(2)').classList.toggle('bad', lump > totalYearly);
+
+  const hero = $('hero');
+  if(breakevenYear){
+    $('verdictText').innerHTML = `One‑time pays off from <b>year ${breakevenYear}</b>`;
+    $('verdictDetail').textContent = `By year ${n}, the yearly plan costs ${fmt(totalYearly)} in total, vs a flat ${fmt(lump)} upfront — a difference of ${fmt(Math.abs(totalYearly-lump))}.`;
+  } else {
+    $('verdictText').innerHTML = `Yearly plan stays cheaper through year ${n}`;
+    $('verdictDetail').textContent = `Cumulative yearly payments reach ${fmt(totalYearly)} by year ${n}, still below the ${fmt(lump)} one‑time payment. It would cross over later, or not at all within this window.`;
+  }
+
+  drawChart(rows, lump);
+  drawTable(rows, lump, breakevenYear);
+}
+
+function drawChart(rows, lump){
+  const svg = $('chart');
+  const W=640,H=260,padL=54,padR=14,padT=14,padB=28;
+  const maxY = Math.max(lump, rows[rows.length-1].cum) * 1.08 || 1;
+  const x = i => padL + (W-padL-padR) * (i/(rows.length-1||1));
+  const y = v => H-padB - (H-padT-padB) * (v/maxY);
+
+  let gridLines = '';
+  for(let g=0; g<=4; g++){
+    const val = maxY*g/4;
+    const yy = y(val);
+    gridLines += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#E4DFD2" stroke-width="1"/>`;
+    gridLines += `<text x="${padL-8}" y="${yy+4}" font-size="9" fill="#5B6E68" text-anchor="end" font-family="IBM Plex Mono, monospace">${(val/1000).toFixed(0)}k</text>`;
+  }
+
+  let path = rows.map((r,i)=> `${i===0?'M':'L'} ${x(i)} ${y(r.cum)}`).join(' ');
+  const lumpY = y(lump);
+  const lumpLine = `<line x1="${padL}" y1="${lumpY}" x2="${W-padR}" y2="${lumpY}" stroke="#C97A2B" stroke-width="2" stroke-dasharray="5,4"/>`;
+
+  const xLabels = [1, Math.ceil(rows.length/2), rows.length].map(v=>{
+    const i = v-1;
+    return `<text x="${x(i)}" y="${H-8}" font-size="9" fill="#5B6E68" text-anchor="middle" font-family="IBM Plex Mono, monospace">Yr ${v}</text>`;
+  }).join('');
+
+  svg.innerHTML = `
+    ${gridLines}
+    ${lumpLine}
+    <path d="${path}" fill="none" stroke="#1F5F5B" stroke-width="2.5"/>
+    ${xLabels}
+  `;
+}
+
+function drawTable(rows, lump, breakevenYear){
+  const t = $('yearTable');
+  const showRows = rows.filter((r,i)=> rows.length<=12 || i%Math.ceil(rows.length/12)===0 || r.year===breakevenYear || i===rows.length-1);
+  let html = `<tr><th>Year</th><th>Premium that year</th><th>Cumulative yearly</th><th>One-time</th></tr>`;
+  showRows.forEach(r=>{
+    html += `<tr class="${r.year===breakevenYear?'breakeven':''}">
+      <td>Year ${r.year}${r.year===breakevenYear?' ← breakeven':''}</td>
+      <td>${fmt(r.premium)}</td>
+      <td>${fmt(r.cum)}</td>
+      <td>${fmt(lump)}</td>
+    </tr>`;
+  });
+  t.innerHTML = html;
+}
+
+compute();
+</script>
+</body>
+</html>

@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — know what you own</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1210; --surface:#161B17; --surface-2:#1E2420; --hairline:#2B322C;
+    --gold:#C8A24A; --gold-dim:#8f7534;
+    --positive:#6FBF8B; --negative:#C0604A; --transfer:#7FA7C8;
+    --text:#ECEAE1; --text-muted:#8C9389; --text-faint:#5B615A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 14px 90px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-mark{width:26px;height:26px;border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:14px;color:var(--gold);flex-shrink:0;}
+  .brand-name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .brand-sub{font-size:10px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-top:1px;}
+  .curr-toggle{display:flex;border:1px solid var(--hairline);border-radius:20px;overflow:hidden;}
+  .curr-toggle button{background:transparent;border:none;color:var(--text-muted);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:6px 11px;cursor:pointer;}
+  .curr-toggle button.active{background:var(--gold);color:#171207;font-weight:600;}
+
+  .btn{background:var(--gold);color:#171207;border:none;border-radius:8px;padding:9px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;}
+  .btn:active{transform:scale(0.97);}
+  .btn-ghost{background:transparent;border:1px solid var(--hairline);color:var(--text-muted);}
+  .btn-ghost:hover{border-color:var(--gold-dim);color:var(--text);}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:7px;}
+  .btn-block{width:100%;margin-top:4px;}
+
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;}
+  .card-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;}
+  .card-total{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-muted);}
+  .card-sub{font-size:11.5px;color:var(--text-faint);margin-top:-8px;margin-bottom:10px;}
+
+  .hero{background:radial-gradient(120% 140% at 15% 0%, #1B2119 0%, var(--surface) 55%);border:1px solid var(--hairline);border-radius:16px;padding:24px 20px 20px;position:relative;overflow:hidden;margin-bottom:12px;}
+  .hero-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;}
+  .hero-figure{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+  .hero-number{font-family:'Fraunces',serif;font-size:40px;font-weight:600;line-height:1;letter-spacing:-0.01em;}
+  .hero-caption{font-size:12.5px;color:var(--text-muted);margin-top:10px;}
+  .stamp{position:absolute;top:16px;right:16px;width:58px;height:58px;border-radius:50%;border:1.5px dashed var(--gold-dim);display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(-8deg);opacity:.85;}
+  .stamp span{display:block;text-align:center;line-height:1.15;}
+  .stamp .s1{font-family:'Fraunces',serif;font-size:8px;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;}
+  .stamp .s2{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:2px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:480px){.grid2{grid-template-columns:1fr;}}
+
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}
+  .metric-box{background:var(--surface-2);border-radius:10px;padding:12px;}
+  .metric-box .mlabel{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .metric-box .mval{font-family:'Fraunces',serif;font-size:19px;margin-top:4px;}
+  .metric-box .mval.pos{color:var(--positive);} .metric-box .mval.neg{color:var(--negative);}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:10px;font-size:10.5px;background:var(--surface-2);color:var(--text-muted);}
+  .pill.good{background:rgba(111,191,139,0.15);color:var(--positive);}
+  .pill.warn{background:rgba(200,162,74,0.15);color:var(--gold);}
+  .pill.bad{background:rgba(192,96,74,0.15);color:var(--negative);}
+
+  .info-note{font-size:11.5px;color:var(--text-faint);line-height:1.55;padding:10px 12px;background:var(--surface-2);border-radius:10px;margin-top:10px;}
+
+  .bar-row{margin-bottom:10px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+  .bar-top .val{font-family:'IBM Plex Mono',monospace;color:var(--text-muted);}
+  .bar-track{height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;border-radius:4px;background:var(--gold);}
+  .bar-fill.over{background:var(--negative);}
+  .bar-target-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--text);opacity:.7;}
+
+  .empty{font-size:12.5px;color:var(--text-faint);padding:6px 0;}
+
+  .row-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hairline);gap:8px;}
+  .row-item:last-child{border-bottom:none;}
+  .row-left{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .row-name{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .row-meta{font-size:11px;color:var(--text-faint);}
+  .row-val{font-family:'IBM Plex Mono',monospace;font-size:13px;flex-shrink:0;white-space:nowrap;}
+  .row-val.neg{color:var(--negative);} .row-val.pos{color:var(--positive);} .row-val.xfer{color:var(--transfer);}
+  .row-actions{display:flex;gap:4px;flex-shrink:0;}
+  .icon-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 5px;}
+  .icon-btn:hover{color:var(--gold);}
+  .chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);margin-left:6px;}
+  .mf-result{padding:8px 10px;font-size:12.5px;border:1px solid var(--hairline);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--surface-2);}
+  .mf-result:hover{border-color:var(--gold-dim);color:var(--text);}
+  .nav-info{font-size:12px;color:var(--positive);background:rgba(111,191,139,0.08);border-radius:8px;padding:8px 10px;margin-bottom:12px;}
+
+  .flow-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .flow-label{width:74px;font-size:12px;color:var(--text-muted);flex-shrink:0;}
+  .flow-track{flex:1;height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden;}
+  .flow-fill{height:100%;}
+  .flow-fill.income{background:var(--positive);} .flow-fill.expense{background:var(--negative);} .flow-fill.transfer{background:var(--transfer);}
+  .flow-amt{width:88px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;flex-shrink:0;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{padding:7px 12px;border-radius:20px;border:1px solid var(--hairline);background:transparent;color:var(--text-muted);font-size:12.5px;cursor:pointer;}
+  .tab.active{background:var(--gold);color:#171207;border-color:var(--gold);font-weight:600;}
+
+  .subnav{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--hairline);}
+  .subnav button{background:none;border:none;color:var(--text-muted);font-size:13px;padding:9px 4px;margin-right:16px;cursor:pointer;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;}
+  .subnav button.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11.5px;color:var(--text-muted);margin-bottom:5px;}
+  .field input,.field select{width:100%;background:var(--surface-2);border:1px solid var(--hairline);border-radius:8px;color:var(--text);padding:10px 11px;font-size:14px;font-family:'Inter',sans-serif;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--gold-dim);}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);margin-bottom:12px;}
+  .checkline input{width:16px;height:16px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(6,8,6,0.72);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.open{display:flex;}
+  .sheet{background:var(--surface);border:1px solid var(--hairline);border-top-left-radius:18px;border-top-right-radius:18px;width:100%;max-width:720px;padding:18px 16px 24px;max-height:88vh;overflow-y:auto;}
+  .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .sheet-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
+  .close-x{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;}
+
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--hairline);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:30;}
+  .navbtn{background:none;border:none;color:var(--text-faint);font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex:1;font-family:'Inter',sans-serif;padding:2px 0;}
+  .navbtn .dot{width:5px;height:5px;border-radius:50%;background:transparent;}
+  .navbtn.active{color:var(--gold);}
+  .navbtn.active .dot{background:var(--gold);}
+
+  .fab{position:fixed;bottom:74px;right:16px;width:48px;height:48px;border-radius:50%;background:var(--gold);color:#171207;border:none;font-size:24px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:20;}
+  .fab:active{transform:scale(0.95);}
+
+  .toast{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--hairline);color:var(--text);padding:9px 16px;border-radius:20px;font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:60;}
+  .toast.show{opacity:1;}
+
+  .calc-card{background:var(--surface);border:1px solid var(--hairline);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .calc-result{background:var(--surface-2);border-radius:10px;padding:12px 14px;margin-top:6px;}
+  .calc-result .rlabel{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+  .calc-result .rval{font-family:'Fraunces',serif;font-size:24px;color:var(--gold);margin-top:3px;}
+
+  a{color:var(--gold);}
+  .sparkline-wrap{margin-top:4px;}
+  .allo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .allo-key{width:80px;font-size:12.5px;color:var(--text-muted);flex-shrink:0;}
+  .allo-track{flex:1;height:16px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative;}
+  .allo-fill{height:100%;}
+  .allo-nums{width:120px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted);flex-shrink:0;}
+  .legend-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<div class="bottomnav" id="bottomnav">
+  <button class="navbtn" data-tab="overview"><span class="dot"></span>Overview</button>
+  <button class="navbtn" data-tab="wealth"><span class="dot"></span>Wealth</button>
+  <button class="navbtn" data-tab="essentials"><span class="dot"></span>Essentials</button>
+  <button class="navbtn" data-tab="goals"><span class="dot"></span>Goals</button>
+</div>
+
+<button class="fab" id="fab">+</button>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheetContent"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- constants ---------------- */
+const ASSET_CATEGORIES = ["Equity","Mutual Funds","ETFs","Gold","Silver","Real Estate","PPF","Recurring Deposit",
+  "Sovereign Gold Bonds","Cash / Bank","Crypto","Foreign Equity","Other"];
+const EQUITY_CATS = ["Equity","Mutual Funds","ETFs","Foreign Equity"];
+const FIXED_INCOME_CATS = ["PPF","Recurring Deposit","EPF","NPS","SSY","Fixed Deposit","Bonds","Life Insurance (Cash Value)","UAE Gratuity / EOSB","ULIP"];
+/* Note: FIXED_INCOME_CATS keeps the legacy categories too (EPF, NPS, FD, etc.) so any
+   existing holdings you already logged still classify correctly as fixed income — but the
+   "add asset" dropdown (ASSET_CATEGORIES) now only offers PPF and Recurring Deposit, since
+   that's what you're actually investing in going forward. */
+const GOLD_CATS = ["Gold","Silver","Sovereign Gold Bonds"];
+const CASH_CATS = ["Cash / Bank"];
+function assetClass(cat){
+  if(EQUITY_CATS.includes(cat)) return 'equity';
+  if(FIXED_INCOME_CATS.includes(cat)) return 'fixedIncome';
+  if(GOLD_CATS.includes(cat)) return 'gold';
+  if(CASH_CATS.includes(cat)) return 'cash';
+  return 'other';
+}
+const CLASS_LABEL = {equity:'Equity',fixedIncome:'Fixed income',gold:'Gold',cash:'Cash',other:'Other'};
+const CLASS_COLOR = {equity:'#C8A24A',fixedIncome:'#7FA7C8',gold:'#D9C066',cash:'#6FBF8B',other:'#8C6F9C'};
+const LIABILITY_TYPES = ["Home Loan","Car Loan","Personal Loan","Education Loan","Credit Card","Loan Against Property","Other"];
+const DEFAULT_EXPENSE_CATS = ["Groceries","Rent / EMI","Utilities","Dining Out","Transport","Shopping",
+  "Healthcare","Entertainment","Travel","Education","Insurance","Subscriptions","Family Support","Other"];
+const INCOME_CATS = ["Salary","Freelance","Business","Rental Income","Dividends","Interest","Other"];
+const CUR = ["INR","AED"];
+const DEFAULT_ALLOC_TARGET = { equity:50, fixedIncome:40, gold:5, cash:5 };
+
+/* ---------------- health insurer premium-hike estimates ----------------
+   These are rough, general estimates (not company-published figures) based on the fact that
+   standalone health insurers tend to revise premiums a bit more aggressively than general/
+   composite insurers, layered on top of India's broad medical-inflation trend (~14%/yr).
+   Treat this as a planning estimate, not a guarantee — actual hikes depend on your age band,
+   claims history, and IRDAI-approved revisions for your specific plan. */
+const HEALTH_INSURERS = [
+  { key:'star health', label:'Star Health', type:'standalone', rate:15 },
+  { key:'niva bupa', label:'Niva Bupa (Max Bupa)', type:'standalone', rate:15 },
+  { key:'max bupa', label:'Niva Bupa (Max Bupa)', type:'standalone', rate:15 },
+  { key:'care health', label:'Care Health', type:'standalone', rate:15 },
+  { key:'religare', label:'Care Health (Religare)', type:'standalone', rate:15 },
+  { key:'manipal cigna', label:'Manipal Cigna', type:'standalone', rate:14 },
+  { key:'aditya birla health', label:'Aditya Birla Health', type:'standalone', rate:14 },
+  { key:'hdfc ergo', label:'HDFC ERGO', type:'general', rate:12 },
+  { key:'icici lombard', label:'ICICI Lombard', type:'general', rate:12 },
+  { key:'bajaj allianz', label:'Bajaj Allianz', type:'general', rate:12 },
+  { key:'tata aig', label:'Tata AIG', type:'general', rate:12 },
+  { key:'reliance general', label:'Reliance General', type:'general', rate:11 },
+  { key:'cholamandalam', label:'Cholamandalam MS', type:'general', rate:12 },
+  { key:'chola ms', label:'Cholamandalam MS', type:'general', rate:12 },
+  { key:'future generali', label:'Future Generali', type:'general', rate:11 },
+  { key:'universal sompo', label:'Universal Sompo', type:'general', rate:11 },
+  { key:'sbi general', label:'SBI General', type:'general', rate:11 },
+  { key:'go digit', label:'Go Digit', type:'general', rate:12 },
+  { key:'digit', label:'Go Digit', type:'general', rate:12 },
+  { key:'new india', label:'New India Assurance', type:'psu', rate:9 },
+  { key:'national insurance', label:'National Insurance', type:'psu', rate:9 },
+  { key:'united india', label:'United India Insurance', type:'psu', rate:9 },
+  { key:'oriental insurance', label:'Oriental Insurance', type:'psu', rate:9 },
+  { key:'daman', label:'Daman (UAE)', type:'uae', rate:10 },
+  { key:'sukoon', label:'Sukoon Insurance (UAE)', type:'uae', rate:10 },
+  { key:'oman insurance', label:'Sukoon Insurance (UAE)', type:'uae', rate:10 },
+  { key:'axa', label:'AXA / Axa Gulf', type:'uae', rate:10 },
+  { key:'adamjee', label:'Adamjee (UAE)', type:'uae', rate:10 },
+  { key:'nextcare', label:'Nextcare (UAE)', type:'uae', rate:10 },
+  { key:'orient insurance', label:'Orient Insurance (UAE)', type:'uae', rate:10 },
+];
+function estimateHealthHike(insurerName){
+  const q = String(insurerName||'').trim().toLowerCase();
+  if(!q) return null;
+  const match = HEALTH_INSURERS.find(i=>q.includes(i.key) || i.key.includes(q));
+  if(match) return { matched:true, label:match.label, rate:match.rate };
+  return { matched:false, label:insurerName, rate:12 }; // default industry-average estimate
+}
+
+/* ---------------- state ---------------- */
+let state = null;
+function defaultState(){
+  return {
+    settings: { displayCurrency: "INR", fxRate: 23.0, efMonths: 6, allocationTargets: {...DEFAULT_ALLOC_TARGET} },
+    assets: [], liabilities: [], transactions: [], templates: [],
+    budget: DEFAULT_EXPENSE_CATS.map(c=>({category:c, limit:0, currency:"INR", exempt:false})),
+    goals: [], netWorthHistory: [],
+    healthInsurance: { hasCover:false, insurer:"", sumInsured:0, premium:0, currency:"INR", renewalDate:"", familyFloater:false }
+  };
+}
+async function loadState(){
+  try{
+    const r = await window.storage.get('ledger-state-v3', false);
+    state = r && r.value ? JSON.parse(r.value) : null;
+  }catch(e){ state = null; }
+  if(!state){
+    state = defaultState();
+    // migrate from v2
+    try{
+      const old = await window.storage.get('ledger-state-v2', false);
+      if(old && old.value){
+        const o = JSON.parse(old.value);
+        state.settings.displayCurrency = o.settings?.displayCurrency || "INR";
+        state.settings.fxRate = o.settings?.fxRate || 23.0;
+        state.assets = (o.assets||[]).map(a=>({
+          id:a.id, name:a.name, category:a.category, currency:a.currency||"INR",
+          amount:a.amount, quantity: a.units || 0, navValue: a.navValue || 0, navDate: a.navDate || "",
+          navCode: a.navCode || "", monthlySip: 0
+        }));
+        state.liabilities = (o.liabilities||[]).map(l=>({
+          id:l.id, name:l.name, type: l.isCreditCard ? "Credit Card" : "Other", currency:l.currency||"INR",
+          amount:l.amount, interestRate:0, monthlyPayment: l.minDue || 0, dueDay:l.dueDay||null
+        }));
+        state.transactions = (o.transactions||[]).map(t=>({...t, currency:t.currency||"INR"}));
+        state.templates = o.templates || [];
+        state.goals = (o.goals||[]).map(g=>({...g, currency:g.currency||"INR", targetDate:"", expectedReturn:10}));
+        state.budget = o.budget || state.budget;
+        state.netWorthHistory = o.netWorthHistory || [];
+      }
+    }catch(e){}
+  }
+  if(!state.settings.allocationTargets) state.settings.allocationTargets = {...DEFAULT_ALLOC_TARGET};
+  if(state.settings.efMonths === undefined) state.settings.efMonths = 6;
+  if(!state.healthInsurance) state.healthInsurance = defaultState().healthInsurance;
+  if(state.settings.efOverride === undefined) state.settings.efOverride = null;
+  if(state.settings.efTargetOverride === undefined) state.settings.efTargetOverride = null;
+  if(!state.budget || state.budget.length===0) state.budget = DEFAULT_EXPENSE_CATS.map(c=>({category:c, limit:0, currency:"INR", exempt:false}));
+  if(!state.templates) state.templates = [];
+  if(!state.netWorthHistory) state.netWorthHistory = [];
+  state.assets.forEach(a=>{ if(a.monthlySip===undefined) a.monthlySip = 0; if(a.quantity===undefined) a.quantity = 0; });
+  state.liabilities.forEach(l=>{ if(l.type===undefined) l.type = "Other"; if(l.interestRate===undefined) l.interestRate = 0; if(l.monthlyPayment===undefined) l.monthlyPayment = 0; });
+  state.goals.forEach(g=>{ if(g.targetDate===undefined) g.targetDate = ""; if(g.expectedReturn===undefined) g.expectedReturn = 10; });
+  snapshotNetWorth();
+  render();
+}
+async function saveState(){
+  try{ await window.storage.set('ledger-state-v3', JSON.stringify(state), false); }
+  catch(e){ showToast('Could not save — try again'); }
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1700);
+}
+
+/* ---------------- currency helpers ---------------- */
+function convert(amount, fromCur, toCur){
+  if(fromCur === toCur) return amount;
+  if(fromCur === "AED" && toCur === "INR") return amount * state.settings.fxRate;
+  if(fromCur === "INR" && toCur === "AED") return amount / state.settings.fxRate;
+  return amount;
+}
+function toDisplay(amount, fromCur){ return convert(amount, fromCur, state.settings.displayCurrency); }
+function sym(cur){ return cur === "AED" ? "AED " : "₹"; }
+function fmtCur(amount, cur){
+  const n = Math.round(amount).toLocaleString('en-IN');
+  return cur === "AED" ? `AED ${n}` : `₹${n}`;
+}
+function fmtDisplay(amount){ return fmtCur(amount, state.settings.displayCurrency); }
+function fmtPct(n){ return `${Math.round(n)}%`; }
+
+function totalAssetsDisplay(){ return state.assets.reduce((s,a)=>s+toDisplay(Number(a.amount),a.currency),0); }
+function totalLiabDisplay(){ return state.liabilities.reduce((s,l)=>s+toDisplay(Number(l.amount),l.currency),0); }
+function netWorthDisplay(){ return totalAssetsDisplay() - totalLiabDisplay(); }
+function assetsByClassDisplay(){
+  const out = {equity:0, fixedIncome:0, gold:0, cash:0, other:0};
+  state.assets.forEach(a=>{ out[assetClass(a.category)] += toDisplay(Number(a.amount),a.currency); });
+  return out;
+}
+function totalMonthlySipDisplay(){
+  return state.assets.reduce((s,a)=>s+toDisplay(Number(a.monthlySip||0),a.currency),0);
+}
+function totalMonthlyEmiDisplay(){
+  return state.liabilities.reduce((s,l)=>s+toDisplay(Number(l.monthlyPayment||0),l.currency),0);
+}
+
+function snapshotNetWorth(){
+  const today = new Date().toISOString().slice(0,10);
+  const last = state.netWorthHistory[state.netWorthHistory.length-1];
+  if(!last || last.date !== today){
+    state.netWorthHistory.push({date: today, value: netWorthDisplay()});
+    if(state.netWorthHistory.length > 60) state.netWorthHistory.shift();
+  } else {
+    last.value = netWorthDisplay();
+  }
+}
+
+function txThisMonth(){
+  const now = new Date();
+  return state.transactions.filter(t=>{
+    const td = new Date(t.date);
+    return td.getMonth()===now.getMonth() && td.getFullYear()===now.getFullYear();
+  });
+}
+function lastNMonthsLabels(n){
+  const out = [];
+  const d = new Date();
+  for(let i=n-1;i>=0;i--){
+    const dt = new Date(d.getFullYear(), d.getMonth()-i, 1);
+    out.push({ key: dt.toISOString().slice(0,7), label: dt.toLocaleDateString('en-IN',{month:'short'}) });
+  }
+  return out;
+}
+
+/* ---------------- nav / tab state ---------------- */
+let currentTab = 'overview';
+let txSubTab = 'entries'; // entries | templates
+
+document.getElementById('bottomnav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.navbtn');
+  if(!btn) return;
+  currentTab = btn.dataset.tab;
+  render();
+});
+
+/* ---------------- render dispatcher ---------------- */
+function render(){
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===currentTab));
+  const app = document.getElementById('app');
+  let html = renderTopbar();
+  if(currentTab==='overview') html += renderOverview();
+  else if(currentTab==='wealth') html += renderWealth();
+  else if(currentTab==='essentials') html += renderEssentials();
+  else if(currentTab==='goals') html += renderGoals();
+  app.innerHTML = html;
+  attachDynamicHandlers();
+}
+
+function renderTopbar(){
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">L</div>
+      <div><div class="brand-name">Ledger</div><div class="brand-sub">know what you own</div></div>
+    </div>
+    <div class="curr-toggle" id="currToggle">
+      ${CUR.map(c=>`<button data-cur="${c}" class="${state.settings.displayCurrency===c?'active':''}">${c}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ================================================================
+   TAB 1 — OVERVIEW (net worth, income, Dubai spend, India investment)
+   ================================================================ */
+function renderOverview(){
+  const nw = netWorthDisplay();
+  const totalAssets = totalAssetsDisplay();
+  const totalLiab = totalLiabDisplay();
+  const monthTx = txThisMonth();
+  const income = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+  const expenseDubai = monthTx.filter(t=>t.type==='expense' && t.currency==='AED').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+  const expenseIndiaGeneral = monthTx.filter(t=>t.type==='expense' && t.currency==='INR').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+  const indiaInvestment = totalMonthlySipDisplay();
+  const d = new Date();
+
+  let body = '';
+  if(txSubTab === 'entries'){
+    const sorted = [...state.transactions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    body = `<div class="card">
+      <div class="card-head"><div class="card-title">All entries</div></div>
+      ${sorted.length ? sorted.slice(0,40).map(t=>renderTxRow(t)).join('') : `<div class="empty">No transactions logged yet. Tap + to add one.</div>`}
+    </div>`;
+  } else {
+    const ym = new Date().toISOString().slice(0,7);
+    body = `<div class="card">
+      <div class="card-head"><div class="card-title">Recurring templates</div></div>
+      ${state.templates.length ? state.templates.map(tp=>{
+        const due = tp.lastRecorded !== ym;
+        return `<div class="row-item">
+          <div class="row-left"><div class="row-name">${tp.name}<span class="chip">${tp.type}</span></div><div class="row-meta">${tp.category} · day ${tp.dayOfMonth} of month</div></div>
+          <div class="row-val ${tp.type==='income'?'pos':'neg'}">${fmtCur(Number(tp.amount), tp.currency)}</div>
+          <div class="row-actions">
+            ${due ? `<button class="btn btn-sm" data-record="${tp.id}">Record</button>` : `<span class="chip">Recorded ✓</span>`}
+            <button class="icon-btn" data-edit="templates" data-id="${tp.id}">Edit</button>
+            <button class="icon-btn" data-del="templates" data-id="${tp.id}">✕</button>
+          </div>
+        </div>`;
+      }).join('') : `<div class="empty">No recurring entries yet. Add your salary or rent as a template.</div>`}
+      <button class="btn btn-ghost btn-sm btn-block" data-open="template" style="margin-top:10px;">+ Add template</button>
+    </div>`;
+  }
+
+  return `
+  <div class="hero">
+    <div class="stamp"><span class="s1">Marked</span><span class="s2">${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span></div>
+    <div class="hero-label">Net worth · ${state.settings.displayCurrency}</div>
+    <div class="hero-figure"><div class="hero-number">${fmtDisplay(nw)}</div></div>
+    <div class="hero-caption">${(state.assets.length||state.liabilities.length) ? `Across ${state.assets.length} asset${state.assets.length!==1?'s':''} and ${state.liabilities.length} liabilit${state.liabilities.length!==1?'ies':'y'}.` : 'Add your first asset in the Wealth tab to begin.'}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">This month</div></div>
+    <div class="metric-grid">
+      <div class="metric-box"><div class="mlabel">Income</div><div class="mval pos">${fmtDisplay(income)}</div></div>
+      <div class="metric-box"><div class="mlabel">Expense · Dubai (AED)</div><div class="mval neg">${fmtCur(expenseDubai,'AED')}</div></div>
+      <div class="metric-box"><div class="mlabel">Expense · India (₹)</div><div class="mval neg">${fmtCur(expenseIndiaGeneral,'INR')}</div></div>
+      <div class="metric-box"><div class="mlabel">India investment / month</div><div class="mval">${fmtCur(indiaInvestment,'INR')}</div></div>
+    </div>
+    <div class="info-note">"India investment" is the sum of monthly SIP amounts you've set on your equity holdings in the Wealth tab — it's not a transaction you log here.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Assets vs liabilities</div></div>
+    <div class="metric-grid">
+      <div class="metric-box"><div class="mlabel">Total assets</div><div class="mval pos">${fmtDisplay(totalAssets)}</div></div>
+      <div class="metric-box"><div class="mlabel">Total liabilities</div><div class="mval neg">${fmtDisplay(totalLiab)}</div></div>
+    </div>
+  </div>
+
+  <div class="subnav">
+    <button class="${txSubTab==='entries'?'active':''}" data-sub="entries">Entries</button>
+    <button class="${txSubTab==='templates'?'active':''}" data-sub="templates">Recurring</button>
+  </div>
+  ${body}
+  `;
+}
+
+function renderTxRow(t){
+  if(t.type === 'transfer'){
+    return `<div class="row-item">
+      <div class="row-left"><div class="row-name">${t.name || 'Transfer'}</div><div class="row-meta">${new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})} · ${t.fromCurrency} → ${t.toCurrency}</div></div>
+      <div class="row-val xfer">${fmtCur(Number(t.fromAmount),t.fromCurrency)} ⇄ ${fmtCur(Number(t.toAmount),t.toCurrency)}</div>
+      <div class="row-actions"><button class="icon-btn" data-edit="transactions" data-id="${t.id}">Edit</button><button class="icon-btn" data-del="transactions" data-id="${t.id}">✕</button></div>
+    </div>`;
+  }
+  return `<div class="row-item">
+    <div class="row-left"><div class="row-name">${t.name}</div><div class="row-meta">${t.category} · ${new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</div></div>
+    <div class="row-val ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'−'}${fmtCur(Number(t.amount),t.currency)}</div>
+    <div class="row-actions"><button class="icon-btn" data-edit="transactions" data-id="${t.id}">Edit</button><button class="icon-btn" data-del="transactions" data-id="${t.id}">✕</button></div>
+  </div>`;
+}
+
+/* ================================================================
+   TAB 2 — WEALTH (equity, fixed income, liabilities, allocation)
+   ================================================================ */
+function renderWealth(){
+  const equityAssets = state.assets.filter(a=>assetClass(a.category)==='equity');
+  const otherAssets = state.assets.filter(a=>assetClass(a.category)!=='equity');
+  const totalAssets = totalAssetsDisplay();
+  const totalLiab = totalLiabDisplay();
+  const byClass = assetsByClassDisplay();
+  const targets = state.settings.allocationTargets;
+  const spark = sparklineSVG(state.netWorthHistory.map(h=>h.value), 300, 56);
+
+  return `
+  <div class="card">
+    <div class="card-head"><div class="card-title">Net worth growth</div><div class="card-total">${fmtDisplay(netWorthDisplay())}</div></div>
+    <div class="sparkline-wrap">${spark}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Equity holdings</div><div class="card-total">${fmtDisplay(equityAssets.reduce((s,a)=>s+toDisplay(a.amount,a.currency),0))}</div></div>
+    ${equityAssets.length ? equityAssets.map(a=>`
+      <div class="row-item">
+        <div class="row-left">
+          <div class="row-name">${a.name}</div>
+          <div class="row-meta">${a.category} · ${a.currency}${a.quantity?` · qty ${a.quantity}`:''}${a.navValue?` · NAV ₹${Number(a.navValue).toFixed(2)}${a.navDate?` (${a.navDate})`:''}`:''}${a.monthlySip?` · SIP ${fmtCur(a.monthlySip,a.currency)}/mo`:''}</div>
+        </div>
+        <div class="row-val pos">${fmtCur(Number(a.amount), a.currency)}</div>
+        <div class="row-actions">
+          ${a.navCode?`<button class="icon-btn" data-refresh-nav="${a.id}" title="Fetch current NAV">↻ NAV</button>`:(a.category==='Mutual Funds'?`<button class="icon-btn" data-link-nav="${a.id}" title="Link to a live fund to enable NAV refresh">🔗 Link NAV</button>`:'')}
+          <button class="icon-btn" data-edit="assets" data-id="${a.id}">Edit</button><button class="icon-btn" data-del="assets" data-id="${a.id}">✕</button></div>
+      </div>`).join('') : `<div class="empty">No equity holdings yet — mutual funds, stocks, ETFs, foreign equity.</div>`}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="asset" style="margin-top:10px;">+ Add asset</button>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Fixed income & other holdings</div><div class="card-total">${fmtDisplay(otherAssets.reduce((s,a)=>s+toDisplay(a.amount,a.currency),0))}</div></div>
+    ${otherAssets.length ? otherAssets.map(a=>`
+      <div class="row-item">
+        <div class="row-left"><div class="row-name">${a.name}</div><div class="row-meta">${a.category} · ${a.currency}${a.monthlySip?` · adds ${fmtCur(a.monthlySip,a.currency)}/mo`:''}</div></div>
+        <div class="row-val pos">${fmtCur(Number(a.amount), a.currency)}</div>
+        <div class="row-actions"><button class="icon-btn" data-edit="assets" data-id="${a.id}">Edit</button><button class="icon-btn" data-del="assets" data-id="${a.id}">✕</button></div>
+      </div>`).join('') : `<div class="empty">No fixed income / gold / cash / real estate holdings yet.</div>`}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="asset" style="margin-top:10px;">+ Add asset</button>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Liabilities</div><div class="card-total">${fmtDisplay(totalLiab)}</div></div>
+    ${state.liabilities.length ? state.liabilities.map(l=>`
+      <div class="row-item">
+        <div class="row-left"><div class="row-name">${l.name}</div>
+          <div class="row-meta">${l.type}${l.interestRate?` · ${l.interestRate}% p.a.`:''}${l.monthlyPayment?` · paying ${fmtCur(l.monthlyPayment,l.currency)}/mo`:''}</div></div>
+        <div class="row-val neg">${fmtCur(Number(l.amount), l.currency)}</div>
+        <div class="row-actions"><button class="icon-btn" data-edit="liabilities" data-id="${l.id}">Edit</button><button class="icon-btn" data-del="liabilities" data-id="${l.id}">✕</button></div>
+      </div>`).join('') : `<div class="empty">No liabilities yet.</div>`}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="liability" style="margin-top:10px;">+ Add liability</button>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Asset allocation</div><div class="card-total">${fmtDisplay(totalAssets)}</div></div>
+    <div class="card-sub">Actual holding vs. your target — the tick mark is the target</div>
+    ${['equity','fixedIncome','gold','cash','other'].map(k=>{
+      const actualVal = byClass[k];
+      const actualPct = totalAssets ? (actualVal/totalAssets*100) : 0;
+      const targetPct = targets[k] || 0;
+      return `<div class="allo-row">
+        <div class="allo-key"><span class="legend-dot" style="background:${CLASS_COLOR[k]}"></span>${CLASS_LABEL[k]}</div>
+        <div class="allo-track"><div class="allo-fill" style="width:${Math.min(100,actualPct)}%;background:${CLASS_COLOR[k]}"></div>${targetPct?`<div class="bar-target-tick" style="left:${Math.min(100,targetPct)}%"></div>`:''}</div>
+        <div class="allo-nums">${fmtPct(actualPct)} · target ${fmtPct(targetPct)}</div>
+      </div>`;
+    }).join('')}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="allocation" style="margin-top:2px;">Edit target allocation</button>
+    <div class="info-note">Target split loosely follows the "keep it simple, prioritise safety" school of thought associated with P V Subramanyam (Pattu, freefincal) — a modest, stable equity share funded by disciplined monthly SIPs, with EPF/PPF/debt doing the heavy lifting for safety, rather than chasing a high equity % just because you're young. These are starting defaults, not a rule — edit them to match your own plan and rebalance periodically.</div>
+  </div>
+  `;
+}
+
+function sparklineSVG(values, w, h){
+  if(!values || values.length < 2) return `<div class="empty">Check back daily to see your growth trend.</div>`;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max-min) || 1;
+  const step = w / (values.length-1);
+  const pts = values.map((v,i)=> `${(i*step).toFixed(1)},${(h - ((v-min)/range)*h).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="#C8A24A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* ================================================================
+   TAB 3 — ESSENTIALS (emergency fund, health cover, debt ratio, savings rate)
+   ================================================================ */
+function renderEssentials(){
+  const monthTx = txThisMonth();
+  const income = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+  const expense = monthTx.filter(t=>t.type==='expense').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+  const savingsRate = income>0 ? Math.round(((income-expense)/income)*100) : 0;
+
+  const efTargetAuto = expense * (state.settings.efMonths || 6);
+  const efTargetOverride = state.settings.efTargetOverride;
+  const efTarget = (efTargetOverride!==null && efTargetOverride!==undefined) ? efTargetOverride : efTargetAuto;
+  const efAuto = state.assets.filter(a=>assetClass(a.category)==='cash').reduce((s,a)=>s+toDisplay(a.amount,a.currency),0);
+  const efOverride = state.settings.efOverride;
+  const efCurrent = (efOverride!==null && efOverride!==undefined) ? efOverride : efAuto;
+  const efPct = efTarget ? Math.min(100, Math.round((efCurrent/efTarget)*100)) : 0;
+  const efStatus = efPct>=100 ? 'good' : efPct>=50 ? 'warn' : 'bad';
+
+  const hi = state.healthInsurance;
+  let hiStatus = 'bad', hiLabel = 'No cover recorded';
+  if(hi.hasCover){
+    hiStatus = 'good'; hiLabel = 'Covered';
+    if(hi.renewalDate){
+      const days = Math.ceil((new Date(hi.renewalDate) - new Date())/86400000);
+      if(days < 0){ hiStatus='bad'; hiLabel='Policy expired'; }
+      else if(days <= 30){ hiStatus='warn'; hiLabel=`Renews in ${days}d`; }
+    }
+  }
+
+
+  const emi = totalMonthlyEmiDisplay();
+  const debtRatio = income>0 ? Math.round((emi/income)*100) : 0;
+  const debtStatus = debtRatio<=30 ? 'good' : debtRatio<=40 ? 'warn' : 'bad';
+
+  const months = lastNMonthsLabels(6);
+  const savingsSeries = months.map(m=>{
+    const tx = state.transactions.filter(t=>t.date.slice(0,7)===m.key);
+    const inc = tx.filter(t=>t.type==='income').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+    const exp = tx.filter(t=>t.type==='expense').reduce((s,t)=>s+toDisplay(Number(t.amount),t.currency),0);
+    return {label:m.label, rate: inc>0 ? Math.round(((inc-exp)/inc)*100) : 0};
+  });
+  const maxRate = Math.max(...savingsSeries.map(s=>Math.abs(s.rate)), 10);
+
+  return `
+  <div class="card">
+    <div class="card-head"><div class="card-title">Emergency fund</div><span class="pill ${efStatus}">${efPct}% funded</span></div>
+    <div class="bar-row">
+      <div class="bar-top"><span>${fmtDisplay(efCurrent)} saved</span><span class="val">target ${fmtDisplay(efTarget)}</span></div>
+      <div class="bar-track"><div class="bar-fill ${efPct<50?'over':''}" style="width:${efPct}%"></div></div>
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field"><label>Your target emergency fund</label><input type="number" id="efTargetInput" min="0" step="any" placeholder="Auto: ${fmtDisplay(efTargetAuto)}" value="${efTargetOverride!==null&&efTargetOverride!==undefined?efTargetOverride:''}"></div>
+      <div class="field"><label>Current amount (optional override)</label><input type="number" id="efOverrideInput" min="0" step="any" placeholder="Auto: ${fmtDisplay(efAuto)}" value="${efOverride!==null&&efOverride!==undefined?efOverride:''}"></div>
+    </div>
+    <div class="field" style="max-width:260px;"><label>Or auto-calc target from months of expenses</label><input type="number" id="efMonthsInput" min="1" max="24" value="${state.settings.efMonths}"></div>
+    <div class="card-sub" style="margin-top:0;">Set your own target above, or leave it blank and it's auto-calculated as months × monthly expenses (currently ${fmtDisplay(efTargetAuto)}). "Current" auto-fills from assets tagged Cash / Bank (${fmtDisplay(efAuto)}) unless you override it.</div>
+    <div class="info-note">Pattu's essentials checklist puts an emergency fund of 6–12 months of expenses (in cash / liquid funds) before aggressive investing.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Health insurance</div><span class="pill ${hiStatus}">${hiLabel}</span></div>
+    ${hi.hasCover ? `
+      <div class="metric-grid">
+        <div class="metric-box"><div class="mlabel">Insurer</div><div class="mval" style="font-size:14px;">${hi.insurer||'—'}</div></div>
+        <div class="metric-box"><div class="mlabel">Sum insured</div><div class="mval" style="font-size:14px;">${fmtCur(hi.sumInsured, hi.currency)}</div></div>
+        <div class="metric-box"><div class="mlabel">Annual premium</div><div class="mval" style="font-size:14px;">${fmtCur(hi.premium, hi.currency)}</div></div>
+        <div class="metric-box"><div class="mlabel">Renewal</div><div class="mval" style="font-size:14px;">${hi.renewalDate||'—'}</div></div>
+      </div>
+      ${hi.familyFloater && hi.insurer && hi.premium ? (()=>{
+        const est = estimateHealthHike(hi.insurer);
+        const increase = hi.premium * (est.rate/100);
+        const nextPremium = hi.premium + increase;
+        return `<div class="info-note" style="margin-top:10px;">
+          ${est.matched ? `Recognised insurer: <b style="color:var(--text);">${est.label}</b>.` : `"${hi.insurer}" isn't in our known-insurer list, so this uses a general industry-average estimate.`}
+          Family floater premiums for this insurer typically rise around <b style="color:var(--gold);">${est.rate}% a year</b> (age-band + medical inflation).
+          At renewal, expect roughly <b style="color:var(--text);">+${fmtCur(increase, hi.currency)}</b>, taking your premium to about <b style="color:var(--text);">${fmtCur(nextPremium, hi.currency)}</b>.
+          This is a planning estimate, not a quoted figure — your insurer's actual revision depends on age, claims, and IRDAI approval.
+        </div>`;
+      })() : ''}` : `<div class="empty">No health cover on file yet.</div>`}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="health" style="margin-top:10px;">${hi.hasCover?'Edit':'Add'} health insurance</button>
+    <div class="info-note">Pattu is emphatic that adequate health insurance comes before market investing — a medical emergency without cover can wipe out years of saving.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Debt-to-income ratio</div><span class="pill ${debtStatus}">${debtRatio}%</span></div>
+    <div class="bar-row">
+      <div class="bar-top"><span>EMI / monthly payments</span><span class="val">${fmtDisplay(emi)} of ${fmtDisplay(income)} income</span></div>
+      <div class="bar-track"><div class="bar-fill ${debtRatio>40?'over':''}" style="width:${Math.min(100,debtRatio)}%"></div></div>
+    </div>
+    <div class="info-note">Keep total EMIs under roughly 30–40% of take-home income. Above that, new borrowing (or even new SIPs) starts to crowd out your safety margin.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">Savings rate</div><span class="pill ${savingsRate>=20?'good':savingsRate>=0?'warn':'bad'}">${savingsRate}% this month</span></div>
+    <div class="card-sub">Last 6 months</div>
+    ${savingsSeries.map(s=>`
+      <div class="flow-row"><div class="flow-label">${s.label}</div><div class="flow-track"><div class="flow-fill ${s.rate>=0?'income':'expense'}" style="width:${Math.min(100,Math.abs(s.rate)/maxRate*100)}%"></div></div><div class="flow-amt">${s.rate}%</div></div>
+    `).join('')}
+    <div class="info-note">A high, consistent savings rate — Pattu often points to 20–30%+ — matters more for reaching goals than chasing higher returns.</div>
+  </div>
+  `;
+}
+
+/* ================================================================
+   TAB 4 — GOALS (goal-based tracking with required monthly SIP)
+   ================================================================ */
+function renderGoals(){
+  return `
+  <div class="card">
+    <div class="card-head"><div class="card-title">Your goals</div></div>
+    ${state.goals.length ? state.goals.map(g=>renderGoalRow(g)).join('') : `<div class="empty">No goals yet. Add one — e.g. retirement, a child's education, a house down payment.</div>`}
+    <button class="btn btn-ghost btn-sm btn-block" data-open="goal" style="margin-top:10px;">+ Add goal</button>
+  </div>
+  <div class="info-note" style="margin:-4px 4px 12px;">Goal-based investing — sizing each SIP to a specific, dated goal rather than investing generically — is core to the Pattu / freefincal approach. Required SIP below assumes your expected return compounds monthly on both the existing corpus and new contributions.</div>
+  `;
+}
+function renderGoalRow(g){
+  const cur = toDisplay(Number(g.current), g.currency);
+  const target = toDisplay(Number(g.target), g.currency);
+  const balance = Math.max(0, target - cur);
+  const pct = target ? Math.min(100, Math.round((cur/target)*100)) : 0;
+  const achievedLine = `<div class="row-meta" style="margin-top:4px;">
+    Achieved <b style="color:var(--positive);">${fmtDisplay(cur)}</b> (${pct}%) ·
+    ${balance>0 ? `Balance to go <b style="color:var(--gold);">${fmtDisplay(balance)}</b>` : `<b style="color:var(--positive);">Target reached 🎉</b>`}
+  </div>`;
+  let sipLine = '';
+  if(g.targetDate){
+    const months = Math.max(1, Math.round((new Date(g.targetDate) - new Date())/(1000*60*60*24*30.44)));
+    const r = (Number(g.expectedReturn)||0)/100/12;
+    const fvCurrent = cur * Math.pow(1+r, months);
+    const remaining = target - fvCurrent;
+    if(remaining <= 0){
+      sipLine = `<div class="row-meta" style="color:var(--positive);margin-top:4px;">Already on track to be fully funded by ${g.targetDate}.</div>`;
+    } else {
+      const requiredSip = r>0 ? remaining / (((Math.pow(1+r,months)-1)/r)*(1+r)) : remaining/months;
+      sipLine = `<div class="row-meta" style="margin-top:4px;">Needs ~${fmtDisplay(requiredSip)}/month to hit target by ${g.targetDate} at ${g.expectedReturn}% p.a.</div>`;
+    }
+  }
+  return `<div class="bar-row">
+    <div class="bar-top"><span>${g.name}</span><span class="val">${fmtCur(g.current,g.currency)} / ${fmtCur(g.target,g.currency)}</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+    ${achievedLine}
+    ${sipLine}
+    <div class="row-actions" style="margin-top:6px;"><button class="icon-btn" data-edit="goals" data-id="${g.id}">Edit</button><button class="icon-btn" data-del="goals" data-id="${g.id}">Remove</button></div>
+  </div>`;
+}
+
+/* ---------------- live NAV lookup (Indian mutual funds via mfapi.in) ---------------- */
+let selectedMF = null; // {code, name, nav, date}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function attachAssetFormExtras(){
+  const nameInput = document.getElementById('name');
+  const categorySelect = document.getElementById('category');
+  let searchTimeout;
+  nameInput.addEventListener('input', ()=>{
+    selectedMF = null;
+    const info = document.getElementById('mfLiveInfo'); if(info) info.innerHTML = '';
+    removeUnitsRow();
+    if(categorySelect.value !== 'Mutual Funds'){ document.getElementById('mfSearchResults').innerHTML=''; return; }
+    const q = nameInput.value.trim();
+    clearTimeout(searchTimeout);
+    if(q.length < 3){ document.getElementById('mfSearchResults').innerHTML=''; return; }
+    searchTimeout = setTimeout(()=>searchMF(q), 400);
+  });
+  categorySelect.addEventListener('change', ()=>{
+    document.getElementById('mfSearchResults').innerHTML='';
+    document.getElementById('mfLiveInfo').innerHTML='';
+    selectedMF=null; removeUnitsRow();
+    if(categorySelect.value === 'Mutual Funds' && nameInput.value.trim().length>=3) searchMF(nameInput.value.trim());
+  });
+}
+
+async function searchMF(query){
+  const box = document.getElementById('mfSearchResults');
+  if(!box) return;
+  box.innerHTML = `<div class="empty">Searching live fund database…</div>`;
+  try{
+    const res = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(query)}`);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    if(!data || !data.length){ box.innerHTML = `<div class="empty">No live matches — you can still enter it manually.</div>`; return; }
+    box.innerHTML = data.slice(0,6).map(d=>`<div class="mf-result" data-code="${d.schemeCode}" data-name="${escapeHtml(d.schemeName)}">${escapeHtml(d.schemeName)}</div>`).join('');
+    box.querySelectorAll('.mf-result').forEach(el=>el.addEventListener('click', ()=>selectMF(el.dataset.code, el.dataset.name)));
+  }catch(e){
+    box.innerHTML = `<div class="empty">Live lookup unavailable right now — enter details manually.</div>`;
+  }
+}
+
+/* ---------------- link an existing holding to a live fund (enables NAV refresh) ---------------- */
+function openLinkNavSheet(assetId){
+  const a = state.assets.find(x=>x.id===assetId);
+  if(!a) return;
+  openSheet(`
+    <div class="sheet-head"><div class="sheet-title">Link "${escapeHtml(a.name)}" to a live fund</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+    <div class="field"><label>Search fund name</label><input type="text" id="linkNavSearch" autocomplete="off" placeholder="e.g. UTI Nifty 50 Index Fund" value="${escapeHtml(a.name)}"></div>
+    <div id="linkNavResults"></div>
+    <div id="linkNavInfo"></div>
+    <div class="info-note">Once linked, tap ↻ NAV on this holding any time to pull the latest NAV. If you've entered units held, the value updates automatically.</div>
+  `);
+  const input = document.getElementById('linkNavSearch');
+  const resultsBox = document.getElementById('linkNavResults');
+  let t;
+  const doSearch = (q)=>{
+    if(q.length < 3){ resultsBox.innerHTML=''; return; }
+    resultsBox.innerHTML = `<div class="empty">Searching live fund database…</div>`;
+    fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(q)}`)
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(data=>{
+        if(!data || !data.length){ resultsBox.innerHTML = `<div class="empty">No live matches found.</div>`; return; }
+        resultsBox.innerHTML = data.slice(0,6).map(d=>`<div class="mf-result" data-code="${d.schemeCode}" data-name="${escapeHtml(d.schemeName)}">${escapeHtml(d.schemeName)}</div>`).join('');
+        resultsBox.querySelectorAll('.mf-result').forEach(el=>el.addEventListener('click', async ()=>{
+          resultsBox.innerHTML = '';
+          document.getElementById('linkNavInfo').innerHTML = `<div class="empty">Fetching live NAV…</div>`;
+          try{
+            const res = await fetch(`https://api.mfapi.in/mf/${el.dataset.code}/latest`);
+            if(!res.ok) throw new Error('bad response');
+            const navData = await res.json();
+            const nav = parseFloat(navData.data[0].nav);
+            const date = navData.data[0].date;
+            a.navCode = el.dataset.code; a.navValue = nav; a.navDate = date;
+            if(a.quantity){ a.amount = nav * Number(a.quantity); }
+            snapshotNetWorth(); await saveState(); closeSheet(); render();
+            showToast(`Linked to ${el.dataset.name} · NAV ₹${nav.toFixed(2)}`);
+          }catch(e){
+            document.getElementById('linkNavInfo').innerHTML = `<div class="empty">Could not fetch NAV for that fund — try another.</div>`;
+          }
+        }));
+      })
+      .catch(()=>{ resultsBox.innerHTML = `<div class="empty">Live lookup unavailable right now.</div>`; });
+  };
+  input.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(()=>doSearch(input.value.trim()), 400); });
+  if(input.value.trim().length>=3) doSearch(input.value.trim());
+}
+
+async function selectMF(code, name){
+  document.getElementById('name').value = name;
+  document.getElementById('mfSearchResults').innerHTML = '';
+  document.getElementById('mfLiveInfo').innerHTML = `<div class="empty">Fetching live NAV…</div>`;
+  try{
+    const res = await fetch(`https://api.mfapi.in/mf/${code}/latest`);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const nav = parseFloat(data.data[0].nav);
+    const date = data.data[0].date;
+    selectedMF = { code, name, nav, date };
+    document.getElementById('mfLiveInfo').innerHTML = `<div class="nav-info">Live NAV ₹${nav.toFixed(2)} as of ${date}</div>`;
+    showUnitsRow(nav);
+  }catch(e){
+    document.getElementById('mfLiveInfo').innerHTML = `<div class="empty">Could not fetch live NAV — enter amount manually.</div>`;
+    selectedMF = null;
+  }
+}
+
+function showUnitsRow(nav){
+  let row = document.getElementById('unitsRow');
+  if(!row){
+    row = document.createElement('div');
+    row.className = 'field-row';
+    row.id = 'unitsRow';
+    row.innerHTML = `<div class="field"><label>Units held</label><input type="number" id="units" min="0" step="any" placeholder="0"></div><div class="field"><label>NAV (₹)</label><input type="number" id="navManual" value="${nav.toFixed(4)}" min="0" step="any"></div>`;
+    document.getElementById('amountRow').insertAdjacentElement('beforebegin', row);
+    document.getElementById('units').addEventListener('input', recomputeAmountFromUnits);
+    document.getElementById('navManual').addEventListener('input', recomputeAmountFromUnits);
+  } else {
+    row.style.display = '';
+    document.getElementById('navManual').value = nav.toFixed(4);
+  }
+}
+function removeUnitsRow(){
+  const row = document.getElementById('unitsRow');
+  if(row) row.remove();
+}
+function recomputeAmountFromUnits(){
+  const units = parseFloat(document.getElementById('units').value)||0;
+  const nav = parseFloat(document.getElementById('navManual').value)||0;
+  document.getElementById('amount').value = (units*nav).toFixed(2);
+}
+
+/* ---------------- modal / sheet forms ---------------- */
+const overlay = document.getElementById('overlay');
+const sheetContent = document.getElementById('sheetContent');
+function openSheet(html){ sheetContent.innerHTML = html; overlay.classList.add('open'); }
+function closeSheet(){ overlay.classList.remove('open'); }
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSheet(); });
+
+document.getElementById('fab').addEventListener('click', ()=>{
+  const map = { overview:'transaction', wealth:'assetChooser', essentials:'health', goals:'goal' };
+  const type = map[currentTab] || 'chooser';
+  if(type) openFormSheet(type);
+});
+
+function optionsHtml(arr, selected){
+  return arr.map(o=>`<option value="${o}" ${o===selected?'selected':''}>${o}</option>`).join('');
+}
+function curOptions(selected){
+  return CUR.map(c=>`<option value="${c}" ${c===(selected||state.settings.displayCurrency)?'selected':''}>${c}</option>`).join('');
+}
+
+function openFormSheet(type, editId){
+  if(type === 'assetChooser'){
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">Add to Wealth</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <div class="field"><button class="btn btn-block" onclick="openFormSheet('asset')">Asset</button></div>
+      <div class="field"><button class="btn btn-block" onclick="openFormSheet('liability')">Liability</button></div>
+    `);
+    return;
+  }
+  if(type === 'asset'){
+    selectedMF = null;
+    const editing = editId ? state.assets.find(a=>a.id===editId) : null;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">${editing?'Edit asset':'Add asset'}</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <form id="f">
+        <div class="field"><label>Name</label><input type="text" id="name" required autocomplete="off" placeholder="e.g. UTI Nifty 50 Index Fund" value="${editing?escapeHtml(editing.name):''}"></div>
+        <div id="mfSearchResults"></div>
+        <div class="field"><label>Product type / category</label><select id="category">${optionsHtml(ASSET_CATEGORIES, editing?editing.category:undefined)}</select></div>
+        <div id="mfLiveInfo"></div>
+        <div class="field-row" id="amountRow">
+          <div class="field"><label>Current value</label><input type="number" id="amount" required min="0" step="any" value="${editing?editing.amount:''}"></div>
+          <div class="field"><label>Currency</label><select id="currency">${curOptions(editing?editing.currency:undefined)}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Quantity / units (optional)</label><input type="number" id="quantity" min="0" step="any" placeholder="0" value="${editing&&editing.quantity?editing.quantity:''}"></div>
+          <div class="field"><label>Investing / month (optional)</label><input type="number" id="monthlySip" min="0" step="any" placeholder="0" value="${editing&&editing.monthlySip?editing.monthlySip:''}"></div>
+        </div>
+        <button type="submit" class="btn btn-block">${editing?'Save changes':'Save asset'}</button>
+        ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this asset</button>`:''}
+      </form>`);
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      const fields = { name:val('name'), category:val('category'), amount:parseFloat(val('amount')), currency:val('currency'),
+        quantity: parseFloat(val('quantity'))||0, monthlySip: parseFloat(val('monthlySip'))||0 };
+      if(selectedMF && document.getElementById('units')){
+        fields.quantity = parseFloat(document.getElementById('units').value)||fields.quantity;
+        fields.navValue = parseFloat(document.getElementById('navManual').value)||selectedMF.nav;
+        fields.navDate = selectedMF.date;
+        fields.navCode = selectedMF.code;
+      }
+      if(editing){ Object.assign(editing, fields); afterSave('Asset updated'); }
+      else { state.assets.push({ id:uid(), ...fields }); afterSave('Asset added'); }
+    });
+    if(editing){
+      document.getElementById('deleteFromForm').addEventListener('click', async ()=>{
+        state.assets = state.assets.filter(x=>x.id!==editing.id);
+        afterSave('Asset removed');
+      });
+    }
+    attachAssetFormExtras();
+    return;
+  }
+  if(type === 'liability'){
+    const editing = editId ? state.liabilities.find(l=>l.id===editId) : null;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">${editing?'Edit liability':'Add liability'}</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <form id="f">
+        <div class="field"><label>Name</label><input type="text" id="name" required placeholder="e.g. Car loan" value="${editing?escapeHtml(editing.name):''}"></div>
+        <div class="field"><label>Type</label><select id="type">${optionsHtml(LIABILITY_TYPES, editing?editing.type:undefined)}</select></div>
+        <div class="field-row">
+          <div class="field"><label>Balance owed</label><input type="number" id="amount" required min="0" step="any" value="${editing?editing.amount:''}"></div>
+          <div class="field"><label>Currency</label><select id="currency">${curOptions(editing?editing.currency:undefined)}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Interest rate (% p.a.)</label><input type="number" id="interestRate" min="0" step="any" placeholder="0" value="${editing&&editing.interestRate?editing.interestRate:''}"></div>
+          <div class="field"><label>Paying / month</label><input type="number" id="monthlyPayment" min="0" step="any" placeholder="0" value="${editing&&editing.monthlyPayment?editing.monthlyPayment:''}"></div>
+        </div>
+        <button type="submit" class="btn btn-block">${editing?'Save changes':'Save liability'}</button>
+        ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this liability</button>`:''}
+      </form>`);
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      const fields = { name:val('name'), type:val('type'), amount:parseFloat(val('amount')), currency:val('currency'),
+        interestRate: parseFloat(val('interestRate'))||0, monthlyPayment: parseFloat(val('monthlyPayment'))||0 };
+      if(editing){ Object.assign(editing, fields); afterSave('Liability updated'); }
+      else { state.liabilities.push({ id:uid(), ...fields }); afterSave('Liability added'); }
+    });
+    if(editing){
+      document.getElementById('deleteFromForm').addEventListener('click', async ()=>{
+        state.liabilities = state.liabilities.filter(x=>x.id!==editing.id);
+        afterSave('Liability removed');
+      });
+    }
+    return;
+  }
+  if(type === 'allocation'){
+    const t = state.settings.allocationTargets;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">Edit target allocation</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <form id="f">
+        <div class="field-row">
+          <div class="field"><label>Equity %</label><input type="number" id="t_equity" min="0" max="100" value="${t.equity}"></div>
+          <div class="field"><label>Fixed income %</label><input type="number" id="t_fixedIncome" min="0" max="100" value="${t.fixedIncome}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Gold %</label><input type="number" id="t_gold" min="0" max="100" value="${t.gold}"></div>
+          <div class="field"><label>Cash %</label><input type="number" id="t_cash" min="0" max="100" value="${t.cash}"></div>
+        </div>
+        <div class="empty" id="allocSumMsg"></div>
+        <button type="submit" class="btn btn-block">Save targets</button>
+      </form>`);
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      state.settings.allocationTargets = {
+        equity: parseFloat(val('t_equity'))||0, fixedIncome: parseFloat(val('t_fixedIncome'))||0,
+        gold: parseFloat(val('t_gold'))||0, cash: parseFloat(val('t_cash'))||0
+      };
+      afterSave('Target allocation saved');
+    });
+    return;
+  }
+  if(type === 'transaction'){
+    const editing = editId ? state.transactions.find(t=>t.id===editId) : null;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">${editing?'Edit transaction':'Add transaction'}</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <div class="tabs" id="txTypeTabs">
+        <button class="tab" data-t="expense">Expense</button>
+        <button class="tab" data-t="income">Income</button>
+        <button class="tab" data-t="transfer">Transfer</button>
+      </div>
+      <div id="txFormArea"></div>
+    `);
+    let txType = editing ? editing.type : 'expense';
+    document.querySelectorAll('#txTypeTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.t===txType));
+    const renderTxForm = ()=>{
+      let inner = '';
+      if(txType === 'transfer'){
+        inner = `
+        <form id="f">
+          <div class="field"><label>Note (optional)</label><input type="text" id="name" placeholder="e.g. AED salary to INR savings" value="${editing&&editing.type==='transfer'?escapeHtml(editing.name||''):''}"></div>
+          <div class="field-row">
+            <div class="field"><label>From amount</label><input type="number" id="fromAmount" required min="0" step="any" value="${editing&&editing.type==='transfer'?editing.fromAmount:''}"></div>
+            <div class="field"><label>From currency</label><select id="fromCurrency">${curOptions(editing&&editing.type==='transfer'?editing.fromCurrency:'AED')}</select></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>To amount</label><input type="number" id="toAmount" required min="0" step="any" value="${editing&&editing.type==='transfer'?editing.toAmount:''}"></div>
+            <div class="field"><label>To currency</label><select id="toCurrency">${curOptions(editing&&editing.type==='transfer'?editing.toCurrency:'INR')}</select></div>
+          </div>
+          <button type="submit" class="btn btn-block">${editing?'Save changes':'Save transfer'}</button>
+          ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this transaction</button>`:''}
+        </form>`;
+      } else {
+        const cats = txType === 'income' ? INCOME_CATS : state.budget.map(b=>b.category);
+        const sameType = editing && editing.type===txType;
+        inner = `
+        <form id="f">
+          <div class="field"><label>${txType==='income'?'Source':'What for'}</label><input type="text" id="name" required placeholder="${txType==='income'?'e.g. Salary':'e.g. Groceries at Carrefour'}" value="${sameType?escapeHtml(editing.name||''):''}"></div>
+          <div class="field"><label>Category</label><select id="category">${optionsHtml(cats, sameType?editing.category:undefined)}</select></div>
+          <div class="field-row">
+            <div class="field"><label>Amount</label><input type="number" id="amount" required min="0" step="any" value="${sameType?editing.amount:''}"></div>
+            <div class="field"><label>Currency</label><select id="currency">${curOptions(sameType?editing.currency:undefined)}</select></div>
+          </div>
+          <div class="info-note" style="margin-top:0;">Currency AED counts toward "Expense in Dubai" and INR toward "Expense in India" on the Overview tab.</div>
+          <button type="submit" class="btn btn-block">${editing?'Save changes':'Save '+txType}</button>
+          ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this transaction</button>`:''}
+        </form>`;
+      }
+      document.getElementById('txFormArea').innerHTML = inner;
+      document.getElementById('f').addEventListener('submit', e=>{
+        e.preventDefault();
+        let fields;
+        if(txType==='transfer'){
+          fields = { type:'transfer', name:val('name'),
+            fromAmount:parseFloat(val('fromAmount')), fromCurrency:val('fromCurrency'),
+            toAmount:parseFloat(val('toAmount')), toCurrency:val('toCurrency') };
+        } else {
+          fields = { type:txType, name:val('name'), category:val('category'),
+            amount:parseFloat(val('amount')), currency:val('currency') };
+        }
+        if(editing){
+          Object.keys(editing).forEach(k=>{ if(!['id','date'].includes(k)) delete editing[k]; });
+          Object.assign(editing, fields);
+          afterSave('Transaction updated');
+        } else {
+          state.transactions.push({ id:uid(), ...fields, date:new Date().toISOString() });
+          afterSave('Transaction saved');
+        }
+      });
+      if(editing){
+        document.getElementById('deleteFromForm').addEventListener('click', async ()=>{
+          state.transactions = state.transactions.filter(x=>x.id!==editing.id);
+          afterSave('Transaction removed');
+        });
+      }
+    };
+    renderTxForm();
+    document.getElementById('txTypeTabs').addEventListener('click', e=>{
+      const b = e.target.closest('.tab'); if(!b) return;
+      document.querySelectorAll('#txTypeTabs .tab').forEach(t=>t.classList.remove('active'));
+      b.classList.add('active'); txType = b.dataset.t; renderTxForm();
+    });
+    return;
+  }
+  if(type === 'template'){
+    const editing = editId ? state.templates.find(t=>t.id===editId) : null;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">${editing?'Edit recurring template':'Add recurring template'}</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <div class="tabs" id="tpTypeTabs">
+        <button class="tab" data-t="expense">Expense</button>
+        <button class="tab" data-t="income">Income</button>
+      </div>
+      <form id="f">
+        <div class="field"><label>Name</label><input type="text" id="name" required placeholder="e.g. Monthly salary" value="${editing?escapeHtml(editing.name):''}"></div>
+        <div class="field"><label>Category</label><select id="category">${optionsHtml(editing&&editing.type==='income'?INCOME_CATS:DEFAULT_EXPENSE_CATS, editing?editing.category:undefined)}</select></div>
+        <div class="field-row">
+          <div class="field"><label>Amount</label><input type="number" id="amount" required min="0" step="any" value="${editing?editing.amount:''}"></div>
+          <div class="field"><label>Currency</label><select id="currency">${curOptions(editing?editing.currency:undefined)}</select></div>
+        </div>
+        <div class="field"><label>Day of month</label><input type="number" id="dayOfMonth" min="1" max="31" value="${editing?editing.dayOfMonth:1}" required></div>
+        <button type="submit" class="btn btn-block">${editing?'Save changes':'Save template'}</button>
+        ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this template</button>`:''}
+      </form>`);
+    let tpType = editing ? editing.type : 'expense';
+    document.querySelectorAll('#tpTypeTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.t===tpType));
+    document.getElementById('tpTypeTabs').addEventListener('click', e=>{
+      const b = e.target.closest('.tab'); if(!b) return;
+      document.querySelectorAll('#tpTypeTabs .tab').forEach(t=>t.classList.remove('active'));
+      b.classList.add('active'); tpType = b.dataset.t;
+      document.getElementById('category').innerHTML = optionsHtml(tpType==='income'?INCOME_CATS:DEFAULT_EXPENSE_CATS);
+    });
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      const fields = { type:tpType, name:val('name'), category:val('category'),
+        amount:parseFloat(val('amount')), currency:val('currency'), dayOfMonth:parseInt(val('dayOfMonth')) };
+      if(editing){ Object.assign(editing, fields); afterSave('Template updated'); }
+      else { state.templates.push({ id:uid(), ...fields, lastRecorded:null }); afterSave('Template saved'); }
+    });
+    if(editing){
+      document.getElementById('deleteFromForm').addEventListener('click', async ()=>{
+        state.templates = state.templates.filter(x=>x.id!==editing.id);
+        afterSave('Template removed');
+      });
+    }
+    return;
+  }
+  if(type === 'health'){
+    const hi = state.healthInsurance;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">Health insurance</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <form id="f">
+        <div class="checkline"><input type="checkbox" id="hasCover" ${hi.hasCover?'checked':''}><label for="hasCover">I have active health insurance</label></div>
+        <div class="field"><label>Insurer</label><input type="text" id="insurer" autocomplete="off" value="${escapeHtml(hi.insurer||'')}" placeholder="e.g. Star Health, HDFC ERGO, Daman"></div>
+        <div id="insurerCheckInfo"></div>
+        <div class="field-row">
+          <div class="field"><label>Sum insured</label><input type="number" id="sumInsured" min="0" step="any" value="${hi.sumInsured||0}"></div>
+          <div class="field"><label>Currency</label><select id="currency">${curOptions(hi.currency)}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Annual premium</label><input type="number" id="premium" min="0" step="any" value="${hi.premium||0}"></div>
+          <div class="field"><label>Renewal date</label><input type="date" id="renewalDate" value="${hi.renewalDate||''}"></div>
+        </div>
+        <div class="checkline"><input type="checkbox" id="familyFloater" ${hi.familyFloater?'checked':''}><label for="familyFloater">Family floater (covers dependents)</label></div>
+        <button type="submit" class="btn btn-block">Save</button>
+      </form>`);
+    const runInsurerCheck = ()=>{
+      const box = document.getElementById('insurerCheckInfo');
+      const name = document.getElementById('insurer').value.trim();
+      const premium = parseFloat(document.getElementById('premium').value)||0;
+      const cur = document.getElementById('currency').value;
+      if(!name){ box.innerHTML=''; return; }
+      const est = estimateHealthHike(name);
+      const increaseLine = premium ? ` Est. next year: <b>+${fmtCur(premium*(est.rate/100), cur)}</b> → ~${fmtCur(premium*(1+est.rate/100), cur)}.` : '';
+      box.innerHTML = est.matched
+        ? `<div class="nav-info">Recognised: ${est.label} · typical family-floater hike ~${est.rate}%/yr.${increaseLine}</div>`
+        : `<div class="empty">Insurer not in our known list — using a general industry-average estimate (~${est.rate}%/yr).${increaseLine}</div>`;
+    };
+    document.getElementById('insurer').addEventListener('input', runInsurerCheck);
+    document.getElementById('premium').addEventListener('input', runInsurerCheck);
+    document.getElementById('currency').addEventListener('change', runInsurerCheck);
+    runInsurerCheck();
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      state.healthInsurance = {
+        hasCover: document.getElementById('hasCover').checked,
+        insurer: val('insurer'), sumInsured: parseFloat(val('sumInsured'))||0,
+        currency: val('currency'), premium: parseFloat(val('premium'))||0,
+        renewalDate: val('renewalDate'), familyFloater: document.getElementById('familyFloater').checked
+      };
+      afterSave('Health insurance saved');
+    });
+    return;
+  }
+  if(type === 'goal'){
+    const editing = editId ? state.goals.find(g=>g.id===editId) : null;
+    openSheet(`
+      <div class="sheet-head"><div class="sheet-title">${editing?'Edit goal':'Add goal'}</div><button class="close-x" onclick="closeSheet()">&times;</button></div>
+      <form id="f">
+        <div class="field"><label>Goal name</label><input type="text" id="name" required placeholder="e.g. Retirement, Child's education" value="${editing?escapeHtml(editing.name):''}"></div>
+        <div class="field-row">
+          <div class="field"><label>Saved so far</label><input type="number" id="current" required min="0" step="any" value="${editing?editing.current:0}"></div>
+          <div class="field"><label>Target</label><input type="number" id="target" required min="0" step="any" value="${editing?editing.target:''}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Currency</label><select id="currency">${curOptions(editing?editing.currency:undefined)}</select></div>
+          <div class="field"><label>Target date (optional)</label><input type="date" id="targetDate" value="${editing?editing.targetDate||'':''}"></div>
+        </div>
+        <div class="field"><label>Expected return % p.a. (for required SIP)</label><input type="number" id="expectedReturn" min="0" step="any" value="${editing?editing.expectedReturn:10}"></div>
+        <button type="submit" class="btn btn-block">${editing?'Save changes':'Save goal'}</button>
+        ${editing?`<button type="button" class="btn btn-ghost btn-block" id="deleteFromForm">Delete this goal</button>`:''}
+      </form>`);
+    document.getElementById('f').addEventListener('submit', e=>{
+      e.preventDefault();
+      const fields = { name:val('name'), current:parseFloat(val('current')), target:parseFloat(val('target')),
+        currency:val('currency'), targetDate: val('targetDate')||'', expectedReturn: parseFloat(val('expectedReturn'))||10 };
+      if(editing){ Object.assign(editing, fields); afterSave('Goal updated'); }
+      else { state.goals.push({ id:uid(), ...fields }); afterSave('Goal added'); }
+    });
+    if(editing){
+      document.getElementById('deleteFromForm').addEventListener('click', async ()=>{
+        state.goals = state.goals.filter(x=>x.id!==editing.id);
+        afterSave('Goal removed');
+      });
+    }
+    return;
+  }
+}
+function val(id){ return document.getElementById(id).value; }
+async function afterSave(msg){
+  snapshotNetWorth();
+  await saveState();
+  closeSheet();
+  render();
+  showToast(msg);
+}
+
+/* ---------------- dynamic handlers (delegated after each render) ---------------- */
+function attachDynamicHandlers(){
+  document.getElementById('currToggle').addEventListener('click', async e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    state.settings.displayCurrency = b.dataset.cur;
+    await saveState(); render();
+  });
+
+  document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click', ()=>openFormSheet(b.dataset.open)));
+
+  const editTypeMap = { assets:'asset', liabilities:'liability', transactions:'transaction', goals:'goal', templates:'template' };
+  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
+    openFormSheet(editTypeMap[b.dataset.edit], b.dataset.id);
+  }));
+
+  document.querySelectorAll('[data-link-nav]').forEach(b=>b.addEventListener('click', ()=>openLinkNavSheet(b.dataset.linkNav)));
+
+  document.querySelectorAll('[data-refresh-nav]').forEach(b=>b.addEventListener('click', async ()=>{
+    const a = state.assets.find(x=>x.id===b.dataset.refreshNav); if(!a || !a.navCode) return;
+    b.textContent = '…';
+    try{
+      const res = await fetch(`https://api.mfapi.in/mf/${a.navCode}/latest`);
+      if(!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      const nav = parseFloat(data.data[0].nav);
+      const date = data.data[0].date;
+      a.navValue = nav; a.navDate = date;
+      if(a.quantity){ a.amount = nav * Number(a.quantity); }
+      snapshotNetWorth(); await saveState(); render();
+      showToast(`Updated NAV for ${a.name}: ₹${nav.toFixed(2)}`);
+    }catch(e){
+      showToast('Could not fetch current NAV — try again');
+      b.textContent = '↻ NAV';
+    }
+  }));
+
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+    const bucket = b.dataset.del, id = b.dataset.id;
+    state[bucket] = state[bucket].filter(x=>x.id!==id);
+    snapshotNetWorth(); await saveState(); render(); showToast('Removed');
+  }));
+
+  document.querySelectorAll('[data-record]').forEach(b=>b.addEventListener('click', async ()=>{
+    const tp = state.templates.find(t=>t.id===b.dataset.record); if(!tp) return;
+    const ym = new Date().toISOString().slice(0,7);
+    state.transactions.push({ id:uid(), type:tp.type, name:tp.name, category:tp.category, amount:tp.amount, currency:tp.currency, date:new Date().toISOString() });
+    tp.lastRecorded = ym;
+    await saveState(); render(); showToast('Recorded this month');
+  }));
+
+  const subnav = document.querySelector('.subnav');
+  if(subnav) subnav.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    txSubTab = b.dataset.sub; render();
+  });
+
+  const efInput = document.getElementById('efMonthsInput');
+  if(efInput) efInput.addEventListener('change', async ()=>{
+    state.settings.efMonths = parseFloat(efInput.value)||6;
+    await saveState(); render();
+  });
+
+  const efTargetInput = document.getElementById('efTargetInput');
+  if(efTargetInput) efTargetInput.addEventListener('change', async ()=>{
+    const v = efTargetInput.value;
+    state.settings.efTargetOverride = v==='' ? null : (parseFloat(v)||0);
+    await saveState(); render();
+  });
+
+  const efOverrideInput = document.getElementById('efOverrideInput');
+  if(efOverrideInput) efOverrideInput.addEventListener('change', async ()=>{
+    const v = efOverrideInput.value;
+    state.settings.efOverride = v==='' ? null : (parseFloat(v)||0);
+    await saveState(); render();
+  });
+}
+
+loadState();
+</script>
+</body>
+</html>

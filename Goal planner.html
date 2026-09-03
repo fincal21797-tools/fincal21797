@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Planner</title>
+<style>
+  :root{
+    --bg: #F5F6F8;
+    --card: #FFFFFF;
+    --border: #E6E8EC;
+    --ink: #171B22;
+    --ink-soft: #6B7280;
+    --accent: #2B6CB0;
+    --accent-soft: #EAF2FB;
+    --green: #1F8A5F;
+    --green-soft: #E7F6EE;
+    --amber: #B7791F;
+    --amber-soft: #FDF3E3;
+    --red: #C0392B;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: 'SFMono-Regular', Consolas, 'Roboto Mono', monospace;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    padding: 18px 12px 60px;
+  }
+  .wrap{ max-width: 640px; margin: 0 auto; }
+
+  header{ text-align:center; margin-bottom: 18px; }
+  header h1{ font-size: 1.35em; margin: 0 0 4px; font-weight: 800; }
+  header p{ font-size: 0.82em; color: var(--ink-soft); margin: 0; }
+
+  /* ---------- Responsive: desktop widening ---------- */
+  @media (min-width: 820px){
+    .wrap{ max-width: 760px; }
+    header h1{ font-size: 1.7em; }
+    header p{ font-size: 0.92em; }
+    .add-bar{ grid-template-columns: repeat(6, 1fr); }
+    .add-bar .custom-btn{ grid-column: span 6; }
+    .goal-card{ padding: 22px 22px 8px; }
+  }
+  @media (min-width: 1080px){
+    .wrap{ max-width: 880px; }
+  }
+
+  /* ---------- Save + saved reports panel ---------- */
+  .save-plan-row{ display:flex; gap:8px; margin-top:14px; }
+  .save-plan-btn{
+    flex:1;
+    background: var(--accent);
+    color:#fff;
+    border:none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 0.86em;
+    cursor:pointer;
+  }
+  .save-plan-btn:active{ transform: scale(0.98); }
+  .save-plan-hint{ text-align:center; font-size:0.7em; color:var(--ink-soft); margin-top:6px; }
+
+  .reports-panel{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 18px 0 8px;
+    overflow:hidden;
+  }
+  .reports-toggle{
+    width:100%; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; background:none; border:none; cursor:pointer; padding:14px 16px;
+    font-family: var(--sans); text-align:left; color: var(--ink);
+  }
+  .reports-toggle .rleft{ display:flex; align-items:center; gap:10px; }
+  .reports-toggle .ricon{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    background: var(--accent-soft); display:flex; align-items:center; justify-content:center;
+  }
+  .reports-toggle .ricon svg{ width:15px; height:15px; color: var(--accent); }
+  .reports-toggle .rtitle{ font-size:0.88em; font-weight:700; }
+  .reports-toggle .rsub{ font-size:0.7em; color: var(--ink-soft); margin-top:1px; }
+  .reports-toggle .rcount{
+    font-family: var(--mono); font-size: 0.72em; color: var(--ink-soft);
+    background: var(--bg); border-radius:20px; padding:3px 10px; flex-shrink:0;
+  }
+  .reports-toggle .chev{ width:13px; height:13px; color: var(--ink-soft); transition: transform 0.2s ease; flex-shrink:0; }
+  .reports-panel.open .chev{ transform: rotate(180deg); }
+  .reports-body{ padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  .reports-body[hidden]{ display:none; }
+  .report-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding: 11px 0; border-bottom: 1px dashed var(--border);
+  }
+  .report-row:last-child{ border-bottom:none; }
+  .report-date{ font-size:0.78em; font-weight:700; }
+  .report-meta{ font-size:0.72em; color: var(--ink-soft); margin-top:2px; font-family: var(--mono); }
+  .report-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .report-actions button{
+    background:none; border:1px solid var(--border); border-radius:7px;
+    padding:5px 9px; font-size:0.72em; cursor:pointer; color: var(--ink-soft);
+  }
+  .report-actions .restore-btn:hover{ color: var(--accent); border-color: var(--accent); }
+  .report-actions .del-btn:hover{ color: var(--red); border-color: var(--red); }
+  .reports-empty{ font-size:0.78em; color: var(--ink-soft); text-align:center; padding:14px 0; }
+
+  /* ---------- Summary ---------- */
+  .summary{
+    background: linear-gradient(180deg, var(--accent-soft), var(--card) 65%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .summary .total-label{
+    text-align:center;
+    font-size: 0.78em;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .summary .total-value{
+    text-align:center;
+    font-size: 2.1em;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: var(--mono);
+    margin: 2px 0 12px;
+  }
+  .bar-row{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 0.78em;
+    padding: 5px 0;
+  }
+  .bar-row .name{
+    width: 34%;
+    flex-shrink:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .bar-row .track{
+    flex:1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow:hidden;
+  }
+  .bar-row .fill{
+    height:100%;
+    background: var(--accent);
+    border-radius: 5px;
+    transition: width 0.2s;
+  }
+  .bar-row .amt{
+    width: 78px;
+    text-align:right;
+    font-family: var(--mono);
+    flex-shrink:0;
+    font-size: 0.94em;
+  }
+
+  /* ---------- Add goal buttons ---------- */
+  .add-bar{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .add-bar button{
+    font-family: var(--sans);
+    font-size: 0.78em;
+    font-weight: 600;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 4px;
+    cursor:pointer;
+    color: var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 3px;
+  }
+  .add-bar button:active{ background: var(--accent-soft); }
+  .add-bar button .emoji{ font-size: 1.3em; }
+  .add-bar .custom-btn{
+    grid-column: span 3;
+    flex-direction: row;
+    justify-content:center;
+    background: var(--ink);
+    color: white;
+    border: none;
+  }
+
+  /* ---------- Goal card ---------- */
+  .goal-card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 6px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .goal-head{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .goal-head .emoji{ font-size: 1.3em; }
+  .goal-head input.goal-name{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-size: 1.02em;
+    font-weight: 700;
+    color: var(--ink);
+    outline:none;
+    min-width:0;
+  }
+  .remove-btn{
+    background: none;
+    border:none;
+    color: var(--ink-soft);
+    font-size: 0.95em;
+    cursor:pointer;
+    padding: 4px 6px;
+  }
+  .remove-btn:hover{ color: var(--red); }
+
+  .grid2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .field{ margin-bottom: 12px; }
+  .field label{
+    display:block;
+    font-size: 0.74em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .input-row{
+    display:flex;
+    align-items:center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow:hidden;
+    background: #FCFCFD;
+  }
+  .input-row .prefix, .input-row .suffix{
+    padding: 8px 8px;
+    font-size: 0.82em;
+    color: var(--ink-soft);
+    flex-shrink:0;
+  }
+  .input-row .prefix{ background: var(--accent-soft); border-right: 1px solid var(--border); }
+  .input-row .suffix{ border-left: 1px solid var(--border); }
+  .input-row input{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding: 8px 8px;
+    font-size: 0.9em;
+    font-family: var(--mono);
+    color: var(--ink);
+    outline:none;
+    min-width:0;
+    width: 10px;
+  }
+
+  .allocation-hint{
+    font-size: 0.72em;
+    color: var(--ink-soft);
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 4px 0 12px;
+    line-height:1.5;
+  }
+  .allocation-hint b{ color: var(--ink); }
+
+  .toggle-row{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    padding: 6px 0 12px;
+  }
+  .toggle-row .txt strong{ display:block; font-size: 0.82em; }
+  .toggle-row .txt span{ font-size: 0.72em; color: var(--ink-soft); }
+  .switch{
+    position: relative; width: 38px; height: 22px;
+    background: var(--border); border-radius: 12px; cursor:pointer;
+    transition: background 0.2s; flex-shrink:0;
+  }
+  .switch.on{ background: var(--accent); }
+  .switch::after{
+    content:""; position:absolute; top:2px; left:2px;
+    width:18px; height:18px; background:white; border-radius:50%;
+    transition: left 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .switch.on::after{ left: 18px; }
+
+  .goal-result{
+    border-top: 1px dashed var(--border);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+  .goal-result .row{
+    display:flex;
+    justify-content: space-between;
+    font-size: 0.82em;
+    padding: 4px 0;
+  }
+  .goal-result .row .k{ color: var(--ink-soft); }
+  .goal-result .row .v{ font-family: var(--mono); font-weight:600; }
+  .goal-result .sip-hero{
+    text-align:center;
+    padding: 10px 0 4px;
+  }
+  .goal-result .sip-hero .lbl{ font-size: 0.72em; color: var(--ink-soft); font-weight:600; }
+  .goal-result .sip-hero .val{
+    font-size: 1.55em; font-weight:800; color: var(--green);
+    font-family: var(--mono); margin: 2px 0;
+  }
+  .pill{
+    display:inline-block; font-size: 0.68em; font-weight:600;
+    padding: 3px 9px; border-radius: 20px; margin-top: 4px;
+  }
+  .pill.ok{ background: var(--green-soft); color: var(--green); }
+  .pill.warn{ background: var(--amber-soft); color: var(--amber); }
+
+  table.stepup{
+    width:100%; border-collapse: collapse; margin-top: 10px; font-size: 0.74em;
+  }
+  table.stepup th{
+    text-align:right; color: var(--ink-soft); font-weight:600;
+    padding: 5px 4px; border-bottom: 1px solid var(--border);
+  }
+  table.stepup th:first-child, table.stepup td:first-child{ text-align:left; }
+  table.stepup td{
+    text-align:right; padding: 5px 4px; border-bottom: 1px dashed var(--border);
+    font-family: var(--mono);
+  }
+
+  .empty-state{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.85em;
+    padding: 30px 10px;
+  }
+
+  footer{
+    text-align:center; font-size: 0.7em; color: var(--ink-soft);
+    margin-top: 20px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Goal Planner</h1>
+    <p>One SIP number for every goal — education, marriage, or that PS5 — after P V Subramanyam's goal-based method.</p>
+  </header>
+
+  <div class="summary">
+    <div class="total-label">Total Monthly Investment Needed</div>
+    <div class="total-value" id="grandTotal">₹0</div>
+    <div id="barList"></div>
+    <div class="save-plan-row">
+      <button class="save-plan-btn" id="savePlanBtn">Save this plan as a report</button>
+    </div>
+    <div class="save-plan-hint">Your plan already saves itself as you type — this also logs a dated snapshot below.</div>
+  </div>
+
+  <div class="add-bar">
+    <button onclick="addGoal('education')"><span class="emoji">🎓</span>Education</button>
+    <button onclick="addGoal('marriage')"><span class="emoji">💍</span>Marriage</button>
+    <button onclick="addGoal('car')"><span class="emoji">🚗</span>Car</button>
+    <button onclick="addGoal('bike')"><span class="emoji">🏍️</span>Bike</button>
+    <button onclick="addGoal('gadget')"><span class="emoji">🎮</span>Gadget / PS5</button>
+    <button onclick="addGoal('custom')"><span class="emoji">🎯</span>Custom</button>
+  </div>
+
+  <div id="goalList"></div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    No goals yet — tap a category above to add one.
+  </div>
+
+  <div class="reports-panel" id="reportsPanel">
+    <button class="reports-toggle" id="reportsToggle" aria-expanded="false">
+      <span class="rleft">
+        <span class="ricon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16.5A2.5 2.5 0 0 1 16.5 22H6.5A2.5 2.5 0 0 1 4 19.5v-14Z"/><path d="M8 7.5h7M8 11h7"/></svg></span>
+        <span>
+          <span class="rtitle">Saved reports</span>
+          <span class="rsub">Dated snapshots of this plan, saved on this device</span>
+        </span>
+      </span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="rcount" id="reportsCount">0</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </span>
+    </button>
+    <div class="reports-body" id="reportsBody" hidden>
+      <div id="reportsList"></div>
+    </div>
+  </div>
+
+  <footer>
+    Illustrative calculation only — actual returns and inflation will vary.<br>
+    Not investment advice. Asset-allocation hints are general rules of thumb, not personal recommendations.
+  </footer>
+</div>
+
+<script>
+const PRESETS = {
+  education: { icon:'🎓', label:'Child Education', inflation: 10, name:"Child's Education" },
+  marriage:  { icon:'💍', label:'Child Marriage',  inflation: 8,  name:"Child's Marriage" },
+  car:       { icon:'🚗', label:'New Car',         inflation: 6,  name:'New Car' },
+  bike:      { icon:'🏍️', label:'New Bike',        inflation: 5,  name:'New Bike' },
+  gadget:    { icon:'🎮', label:'Gadget / PS5',    inflation: 4,  name:'PS5 / Gadget' },
+  custom:    { icon:'🎯', label:'Custom Goal',     inflation: 6,  name:'Custom Goal' }
+};
+
+let goals = [];
+let counter = 0;
+
+/* ---------------- persistent local storage ----------------
+   Saves every goal permanently in this browser's localStorage so the
+   plan is still here next time this page is opened, until the user
+   clears it (via Start over, or clearing browser data). */
+const STORAGE_KEY = 'financeToolkit::goalPlanner::v1';
+function persistGoals(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ goals, counter }));
+  }catch(e){ /* storage unavailable — plan just won't persist */ }
+}
+function loadGoals(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.goals) || parsed.goals.length===0) return false;
+    goals = parsed.goals;
+    counter = parsed.counter || parsed.goals.length;
+    return true;
+  }catch(e){ return false; }
+}
+
+function suggestReturn(years){
+  if(years <= 3) return 7;
+  if(years <= 7) return 10;
+  return 12;
+}
+
+function allocationHint(years){
+  if(years <= 3){
+    return { text: "Goal is under 3 years away — keep this mostly in <b>debt / FD / liquid funds</b>. Capital safety matters more than extra return here.", cls:'warn' };
+  } else if(years <= 7){
+    return { text: "Goal is 3–7 years away — a <b>balanced / hybrid</b> mix (roughly 50–65% equity) suits this horizon.", cls:'ok' };
+  } else {
+    return { text: "Goal is 7+ years away — you can afford to be <b>equity-heavy</b> early on, shifting to debt as the goal approaches.", cls:'ok' };
+  }
+}
+
+function fmt(n){
+  n = Math.round(n || 0);
+  const isNeg = n < 0;
+  n = Math.abs(n);
+  let s = n.toString();
+  let lastThree = s.substring(s.length - 3);
+  let other = s.substring(0, s.length - 3);
+  if(other !== '') lastThree = ',' + lastThree;
+  let formatted = other.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+  return (isNeg? '-₹' : '₹') + formatted;
+}
+
+function addGoal(category){
+  const p = PRESETS[category];
+  const id = 'g' + (++counter);
+  const years = 5;
+  const goal = {
+    id, category,
+    name: p.name,
+    cost: category==='gadget' ? 60000 : category==='bike' ? 120000 : category==='car' ? 1000000 : category==='marriage' ? 1500000 : category==='education' ? 2000000 : 100000,
+    years: category==='gadget' ? 1 : category==='bike' ? 2 : category==='car' ? 5 : years,
+    savings: 0,
+    inflation: p.inflation,
+    returnRate: suggestReturn(category==='gadget' ? 1 : category==='bike' ? 2 : category==='car' ? 5 : years),
+    stepupOn: false,
+    stepupRate: 10
+  };
+  goals.push(goal);
+  renderGoalCards();
+  computeAll();
+}
+
+function removeGoal(id){
+  goals = goals.filter(g => g.id !== id);
+  renderGoalCards();
+  computeAll();
+}
+
+function updateField(id, field, value){
+  const g = goals.find(g => g.id === id);
+  if(!g) return;
+  if(field === 'name'){ g.name = value; }
+  else { g[field] = parseFloat(value) || 0; }
+  computeAll();
+}
+
+function onCategoryChange(id, category){
+  const g = goals.find(g => g.id === id);
+  if(!g) return;
+  const p = PRESETS[category];
+  g.category = category;
+  g.inflation = p.inflation;
+  renderGoalCards();
+  computeAll();
+}
+
+function toggleStepup(id){
+  const g = goals.find(g => g.id === id);
+  if(!g) return;
+  g.stepupOn = !g.stepupOn;
+  renderGoalCards();
+  computeAll();
+}
+
+function renderGoalCards(){
+  const list = document.getElementById('goalList');
+  const empty = document.getElementById('emptyState');
+  list.innerHTML = '';
+  empty.style.display = goals.length === 0 ? 'block' : 'none';
+
+  goals.forEach(g => {
+    const p = PRESETS[g.category];
+    const card = document.createElement('div');
+    card.className = 'goal-card';
+    card.id = 'card-' + g.id;
+
+    let categoryOptions = Object.keys(PRESETS).map(k =>
+      `<option value="${k}" ${k===g.category?'selected':''}>${PRESETS[k].icon} ${PRESETS[k].label}</option>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="goal-head">
+        <span class="emoji">${p.icon}</span>
+        <input class="goal-name" value="${g.name}" oninput="updateField('${g.id}','name',this.value)">
+        <button class="remove-btn" onclick="removeGoal('${g.id}')" title="Remove goal">✕</button>
+      </div>
+
+      <div class="field">
+        <label>Category</label>
+        <div class="input-row">
+          <select onchange="onCategoryChange('${g.id}', this.value)" style="flex:1;border:none;background:transparent;padding:8px;font-family:inherit;font-size:0.88em;outline:none;">
+            ${categoryOptions}
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Cost today</label>
+          <div class="input-row">
+            <span class="prefix">₹</span>
+            <input type="number" value="${g.cost}" inputmode="numeric" oninput="updateField('${g.id}','cost',this.value)">
+          </div>
+        </div>
+        <div class="field">
+          <label>Years to goal</label>
+          <div class="input-row">
+            <input type="number" value="${g.years}" inputmode="numeric" oninput="updateField('${g.id}','years',this.value); refreshAllocation('${g.id}')">
+            <span class="suffix">yrs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Inflation for this goal</label>
+          <div class="input-row">
+            <input type="number" step="0.1" value="${g.inflation}" inputmode="decimal" oninput="updateField('${g.id}','inflation',this.value)">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Expected return</label>
+          <div class="input-row">
+            <input type="number" step="0.1" value="${g.returnRate}" inputmode="decimal" oninput="updateField('${g.id}','returnRate',this.value)">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Already saved for this goal</label>
+        <div class="input-row">
+          <span class="prefix">₹</span>
+          <input type="number" value="${g.savings}" inputmode="numeric" oninput="updateField('${g.id}','savings',this.value)">
+        </div>
+      </div>
+
+      <div class="allocation-hint" id="alloc-${g.id}"></div>
+
+      <div class="toggle-row">
+        <div class="txt">
+          <strong>Step up SIP yearly</strong>
+          <span>raise the monthly amount as income grows</span>
+        </div>
+        <div class="switch ${g.stepupOn?'on':''}" onclick="toggleStepup('${g.id}')"></div>
+      </div>
+
+      ${g.stepupOn ? `
+      <div class="field">
+        <label>Annual step-up</label>
+        <div class="input-row">
+          <input type="number" step="1" value="${g.stepupRate}" inputmode="decimal" oninput="updateField('${g.id}','stepupRate',this.value)">
+          <span class="suffix">% / yr</span>
+        </div>
+      </div>` : ''}
+
+      <div class="goal-result">
+        <div class="row"><div class="k">Cost after inflation</div><div class="v" id="future-${g.id}">₹0</div></div>
+        <div class="row"><div class="k">Savings grown by then</div><div class="v" id="grown-${g.id}">₹0</div></div>
+        <div class="row"><div class="k">Corpus still needed</div><div class="v" id="gap-${g.id}">₹0</div></div>
+        <div class="sip-hero">
+          <div class="lbl" id="siplabel-${g.id}">Monthly SIP</div>
+          <div class="val" id="sip-${g.id}">₹0</div>
+          <span class="pill ok" id="pill-${g.id}">On track</span>
+        </div>
+        <div id="stepupwrap-${g.id}" style="display:none;">
+          <table class="stepup"><thead><tr><th>Year</th><th>Monthly SIP</th></tr></thead>
+          <tbody id="stepupbody-${g.id}"></tbody></table>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+    refreshAllocation(g.id);
+  });
+}
+
+function refreshAllocation(id){
+  const g = goals.find(g => g.id === id);
+  if(!g) return;
+  const el = document.getElementById('alloc-' + id);
+  if(!el) return;
+  const hint = allocationHint(g.years);
+  el.innerHTML = hint.text;
+}
+
+function simulateStepup(startSIP, years, monthlyRate, annualStepupPct){
+  let corpus = 0;
+  let sip = startSIP;
+  for(let y=0; y<years; y++){
+    for(let m=0; m<12; m++){
+      corpus = corpus * (1+monthlyRate) + sip;
+    }
+    sip = sip * (1 + annualStepupPct/100);
+  }
+  return corpus;
+}
+
+function computeGoal(g){
+  const futureCost = g.cost * Math.pow(1 + g.inflation/100, g.years);
+  const savingsGrown = g.savings * Math.pow(1 + g.returnRate/100, g.years);
+  const gap = Math.max(futureCost - savingsGrown, 0);
+  const months = Math.round(g.years * 12);
+  const r = Math.pow(1 + g.returnRate/100, 1/12) - 1;
+
+  let sip = 0;
+  let schedule = [];
+
+  if(!g.stepupOn){
+    if(months > 0 && r > 0){
+      const factor = ((Math.pow(1+r, months) - 1) / r) * (1+r);
+      sip = gap / factor;
+    } else if(months > 0){
+      sip = gap / months;
+    }
+  } else {
+    const yearsInt = Math.max(Math.round(g.years), 1);
+    let lo = 0, hi = Math.max(gap, 1);
+    for(let i=0;i<60;i++){
+      const mid = (lo+hi)/2;
+      const fv = simulateStepup(mid, yearsInt, r, g.stepupRate);
+      if(fv > gap) hi = mid; else lo = mid;
+    }
+    sip = (lo+hi)/2;
+    let s = sip;
+    for(let y=1;y<=yearsInt;y++){
+      schedule.push({year:y, sip:s});
+      s = s * (1 + g.stepupRate/100);
+    }
+  }
+
+  return { futureCost, savingsGrown, gap, sip: Math.max(sip,0), schedule };
+}
+
+function computeAll(){
+  let total = 0;
+  const barData = [];
+
+  goals.forEach(g => {
+    const r = computeGoal(g);
+    total += r.sip;
+    barData.push({ name: g.name, sip: r.sip });
+
+    const futureEl = document.getElementById('future-' + g.id);
+    if(futureEl){
+      document.getElementById('future-' + g.id).textContent = fmt(r.futureCost);
+      document.getElementById('grown-' + g.id).textContent = fmt(r.savingsGrown);
+      document.getElementById('gap-' + g.id).textContent = fmt(r.gap);
+      document.getElementById('sip-' + g.id).textContent = fmt(r.sip);
+      document.getElementById('siplabel-' + g.id).textContent = g.stepupOn ? 'Monthly SIP (Year 1)' : 'Monthly SIP';
+
+      const pill = document.getElementById('pill-' + g.id);
+      if(g.years <= 0){
+        pill.textContent = 'Check years'; pill.className = 'pill warn';
+      } else if(r.gap <= 0){
+        pill.textContent = 'Already funded'; pill.className = 'pill ok';
+      } else {
+        pill.textContent = 'Plan computed'; pill.className = 'pill ok';
+      }
+
+      const wrap = document.getElementById('stepupwrap-' + g.id);
+      if(g.stepupOn){
+        wrap.style.display = 'block';
+        const body = document.getElementById('stepupbody-' + g.id);
+        body.innerHTML = r.schedule.map(s => `<tr><td>Year ${s.year}</td><td>${fmt(s.sip)}</td></tr>`).join('');
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+  });
+
+  document.getElementById('grandTotal').textContent = fmt(total);
+  persistGoals();
+
+  const barList = document.getElementById('barList');
+  barList.innerHTML = '';
+  if(total > 0){
+    barData.forEach(b => {
+      const pct = total > 0 ? (b.sip / total * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="name">${b.name}</div>
+        <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="amt">${fmt(b.sip)}</div>
+      `;
+      barList.appendChild(row);
+    });
+  }
+}
+
+// restore any previously saved plan; otherwise seed with one example goal
+if(loadGoals()){
+  renderGoalCards();
+  computeAll();
+} else {
+  addGoal('education');
+}
+
+// let users clear their saved plan and start fresh
+(function addResetLink(){
+  const footer = document.querySelector('footer');
+  if(!footer) return;
+  const btn = document.createElement('button');
+  btn.textContent = 'Clear saved plan & start over';
+  btn.style.cssText = 'margin-top:10px;background:none;border:1px solid var(--border);color:var(--ink-soft);font-size:0.72em;padding:6px 12px;border-radius:20px;cursor:pointer;font-family:var(--sans);';
+  btn.onclick = function(){
+    if(!confirm('Clear all saved goals on this device? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    goals = []; counter = 0;
+    addGoal('education');
+  };
+  footer.appendChild(document.createElement('br'));
+  footer.appendChild(btn);
+})();
+
+/* ---------------- saved reports (manual snapshots) ---------------- */
+const REPORTS_KEY = 'financeToolkit::goalPlanner::reports::v1';
+function loadReports(){
+  try{
+    const raw = localStorage.getItem(REPORTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function saveReportsList(list){
+  try{ localStorage.setItem(REPORTS_KEY, JSON.stringify(list)); }catch(e){}
+}
+function fmtReportDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+function addReport(){
+  let total = 0;
+  goals.forEach(g => { total += computeGoal(g).sip; });
+  const list = loadReports();
+  list.unshift({
+    id: 'r' + Date.now().toString(36),
+    date: new Date().toISOString(),
+    totalSip: total,
+    goalCount: goals.length,
+    goals: JSON.parse(JSON.stringify(goals))
+  });
+  if(list.length > 200) list.length = 200;
+  saveReportsList(list);
+  renderReportsPanel();
+}
+function deleteReport(id){
+  const list = loadReports().filter(r => r.id !== id);
+  saveReportsList(list);
+  renderReportsPanel();
+}
+function restoreReport(id){
+  const r = loadReports().find(r => r.id === id);
+  if(!r) return;
+  if(!confirm('Load this saved report into your working plan? Your current goals will be replaced (this report will stay saved).')) return;
+  goals = JSON.parse(JSON.stringify(r.goals));
+  counter = goals.length;
+  renderGoalCards();
+  computeAll();
+}
+function renderReportsPanel(){
+  const list = loadReports();
+  const countEl = document.getElementById('reportsCount');
+  const listEl = document.getElementById('reportsList');
+  if(!countEl || !listEl) return;
+  countEl.textContent = list.length;
+  if(list.length === 0){
+    listEl.innerHTML = '<div class="reports-empty">No saved reports yet — use "Save this plan as a report" above to log one.</div>';
+    return;
+  }
+  listEl.innerHTML = list.map(r => `
+    <div class="report-row">
+      <div>
+        <div class="report-date">${fmtReportDate(r.date)}</div>
+        <div class="report-meta">${r.goalCount} goal${r.goalCount===1?'':'s'} · ${fmt(r.totalSip)}/mo total</div>
+      </div>
+      <div class="report-actions">
+        <button class="restore-btn" data-restore="${r.id}">Load</button>
+        <button class="del-btn" data-del="${r.id}">✕</button>
+      </div>
+    </div>
+  `).join('');
+  listEl.querySelectorAll('[data-restore]').forEach(b => b.addEventListener('click', () => restoreReport(b.getAttribute('data-restore'))));
+  listEl.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteReport(b.getAttribute('data-del'))));
+}
+(function initReportsPanel(){
+  const panel = document.getElementById('reportsPanel');
+  const toggle = document.getElementById('reportsToggle');
+  const body = document.getElementById('reportsBody');
+  toggle.addEventListener('click', () => {
+    const willOpen = body.hasAttribute('hidden');
+    if(willOpen){ body.removeAttribute('hidden'); panel.classList.add('open'); }
+    else{ body.setAttribute('hidden',''); panel.classList.remove('open'); }
+    toggle.setAttribute('aria-expanded', String(willOpen));
+  });
+  document.getElementById('savePlanBtn').addEventListener('click', () => {
+    addReport();
+    if(body.hasAttribute('hidden')) toggle.click();
+  });
+  renderReportsPanel();
+})();
+</script>
+</body>
+</html>
