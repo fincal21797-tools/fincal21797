@@ -30,11 +30,9 @@
     padding: 18px 12px 60px;
   }
   .wrap{ max-width: 640px; margin: 0 auto; }
-
   header{ text-align:center; margin-bottom: 18px; }
   header h1{ font-size: 1.35em; margin: 0 0 4px; font-weight: 800; }
   header p{ font-size: 0.82em; color: var(--ink-soft); margin: 0; }
-
   /* ---------- Responsive: desktop widening ---------- */
   @media (min-width: 820px){
     .wrap{ max-width: 760px; }
@@ -47,7 +45,6 @@
   @media (min-width: 1080px){
     .wrap{ max-width: 880px; }
   }
-
   /* ---------- Save + saved reports panel ---------- */
   .save-plan-row{ display:flex; gap:8px; margin-top:14px; }
   .save-plan-btn{
@@ -64,7 +61,6 @@
   }
   .save-plan-btn:active{ transform: scale(0.98); }
   .save-plan-hint{ text-align:center; font-size:0.7em; color:var(--ink-soft); margin-top:6px; }
-
   .reports-panel{
     background: var(--card);
     border: 1px solid var(--border);
@@ -108,7 +104,6 @@
   .report-actions .restore-btn:hover{ color: var(--accent); border-color: var(--accent); }
   .report-actions .del-btn:hover{ color: var(--red); border-color: var(--red); }
   .reports-empty{ font-size:0.78em; color: var(--ink-soft); text-align:center; padding:14px 0; }
-
   /* ---------- Summary ---------- */
   .summary{
     background: linear-gradient(180deg, var(--accent-soft), var(--card) 65%);
@@ -165,7 +160,6 @@
     flex-shrink:0;
     font-size: 0.94em;
   }
-
   /* ---------- Add goal buttons ---------- */
   .add-bar{
     display:grid;
@@ -198,7 +192,6 @@
     color: white;
     border: none;
   }
-
   /* ---------- Goal card ---------- */
   .goal-card{
     background: var(--card);
@@ -234,7 +227,6 @@
     padding: 4px 6px;
   }
   .remove-btn:hover{ color: var(--red); }
-
   .grid2{
     display:grid;
     grid-template-columns: 1fr 1fr;
@@ -276,7 +268,6 @@
     min-width:0;
     width: 10px;
   }
-
   .allocation-hint{
     font-size: 0.72em;
     color: var(--ink-soft);
@@ -287,7 +278,6 @@
     line-height:1.5;
   }
   .allocation-hint b{ color: var(--ink); }
-
   .toggle-row{
     display:flex;
     justify-content: space-between;
@@ -308,7 +298,6 @@
     transition: left 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
   }
   .switch.on::after{ left: 18px; }
-
   .goal-result{
     border-top: 1px dashed var(--border);
     padding-top: 12px;
@@ -337,7 +326,6 @@
   }
   .pill.ok{ background: var(--green-soft); color: var(--green); }
   .pill.warn{ background: var(--amber-soft); color: var(--amber); }
-
   table.stepup{
     width:100%; border-collapse: collapse; margin-top: 10px; font-size: 0.74em;
   }
@@ -350,14 +338,12 @@
     text-align:right; padding: 5px 4px; border-bottom: 1px dashed var(--border);
     font-family: var(--mono);
   }
-
   .empty-state{
     text-align:center;
     color: var(--ink-soft);
     font-size: 0.85em;
     padding: 30px 10px;
   }
-
   footer{
     text-align:center; font-size: 0.7em; color: var(--ink-soft);
     margin-top: 20px; line-height: 1.6;
@@ -366,12 +352,10 @@
 </head>
 <body>
 <div class="wrap">
-
   <header>
     <h1>Goal Planner</h1>
     <p>One SIP number for every goal — education, marriage, or that PS5 — after P V Subramanyam's goal-based method.</p>
   </header>
-
   <div class="summary">
     <div class="total-label">Total Monthly Investment Needed</div>
     <div class="total-value" id="grandTotal">₹0</div>
@@ -381,7 +365,6 @@
     </div>
     <div class="save-plan-hint">Your plan already saves itself as you type — this also logs a dated snapshot below.</div>
   </div>
-
   <div class="add-bar">
     <button onclick="addGoal('education')"><span class="emoji">🎓</span>Education</button>
     <button onclick="addGoal('marriage')"><span class="emoji">💍</span>Marriage</button>
@@ -390,13 +373,10 @@
     <button onclick="addGoal('gadget')"><span class="emoji">🎮</span>Gadget / PS5</button>
     <button onclick="addGoal('custom')"><span class="emoji">🎯</span>Custom</button>
   </div>
-
   <div id="goalList"></div>
-
   <div class="empty-state" id="emptyState" style="display:none;">
     No goals yet — tap a category above to add one.
   </div>
-
   <div class="reports-panel" id="reportsPanel">
     <button class="reports-toggle" id="reportsToggle" aria-expanded="false">
       <span class="rleft">
@@ -415,13 +395,11 @@
       <div id="reportsList"></div>
     </div>
   </div>
-
   <footer>
     Illustrative calculation only — actual returns and inflation will vary.<br>
     Not investment advice. Asset-allocation hints are general rules of thumb, not personal recommendations.
   </footer>
 </div>
-
 <script>
 const PRESETS = {
   education: { icon:'🎓', label:'Child Education', inflation: 10, name:"Child's Education" },
@@ -431,10 +409,8 @@ const PRESETS = {
   gadget:    { icon:'🎮', label:'Gadget / PS5',    inflation: 4,  name:'PS5 / Gadget' },
   custom:    { icon:'🎯', label:'Custom Goal',     inflation: 6,  name:'Custom Goal' }
 };
-
 let goals = [];
 let counter = 0;
-
 /* ---------------- persistent local storage ----------------
    Saves every goal permanently in this browser's localStorage so the
    plan is still here next time this page is opened, until the user
@@ -456,13 +432,11 @@ function loadGoals(){
     return true;
   }catch(e){ return false; }
 }
-
 function suggestReturn(years){
   if(years <= 3) return 7;
   if(years <= 7) return 10;
   return 12;
 }
-
 function allocationHint(years){
   if(years <= 3){
     return { text: "Goal is under 3 years away — keep this mostly in <b>debt / FD / liquid funds</b>. Capital safety matters more than extra return here.", cls:'warn' };
@@ -472,7 +446,6 @@ function allocationHint(years){
     return { text: "Goal is 7+ years away — you can afford to be <b>equity-heavy</b> early on, shifting to debt as the goal approaches.", cls:'ok' };
   }
 }
-
 function fmt(n){
   n = Math.round(n || 0);
   const isNeg = n < 0;
@@ -484,7 +457,6 @@ function fmt(n){
   let formatted = other.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
   return (isNeg? '-₹' : '₹') + formatted;
 }
-
 function addGoal(category){
   const p = PRESETS[category];
   const id = 'g' + (++counter);
@@ -504,13 +476,11 @@ function addGoal(category){
   renderGoalCards();
   computeAll();
 }
-
 function removeGoal(id){
   goals = goals.filter(g => g.id !== id);
   renderGoalCards();
   computeAll();
 }
-
 function updateField(id, field, value){
   const g = goals.find(g => g.id === id);
   if(!g) return;
@@ -518,7 +488,6 @@ function updateField(id, field, value){
   else { g[field] = parseFloat(value) || 0; }
   computeAll();
 }
-
 function onCategoryChange(id, category){
   const g = goals.find(g => g.id === id);
   if(!g) return;
@@ -528,7 +497,6 @@ function onCategoryChange(id, category){
   renderGoalCards();
   computeAll();
 }
-
 function toggleStepup(id){
   const g = goals.find(g => g.id === id);
   if(!g) return;
@@ -536,30 +504,25 @@ function toggleStepup(id){
   renderGoalCards();
   computeAll();
 }
-
 function renderGoalCards(){
   const list = document.getElementById('goalList');
   const empty = document.getElementById('emptyState');
   list.innerHTML = '';
   empty.style.display = goals.length === 0 ? 'block' : 'none';
-
   goals.forEach(g => {
     const p = PRESETS[g.category];
     const card = document.createElement('div');
     card.className = 'goal-card';
     card.id = 'card-' + g.id;
-
     let categoryOptions = Object.keys(PRESETS).map(k =>
       `<option value="${k}" ${k===g.category?'selected':''}>${PRESETS[k].icon} ${PRESETS[k].label}</option>`
     ).join('');
-
     card.innerHTML = `
       <div class="goal-head">
         <span class="emoji">${p.icon}</span>
         <input class="goal-name" value="${g.name}" oninput="updateField('${g.id}','name',this.value)">
         <button class="remove-btn" onclick="removeGoal('${g.id}')" title="Remove goal">✕</button>
       </div>
-
       <div class="field">
         <label>Category</label>
         <div class="input-row">
@@ -568,7 +531,6 @@ function renderGoalCards(){
           </select>
         </div>
       </div>
-
       <div class="grid2">
         <div class="field">
           <label>Cost today</label>
@@ -585,7 +547,6 @@ function renderGoalCards(){
           </div>
         </div>
       </div>
-
       <div class="grid2">
         <div class="field">
           <label>Inflation for this goal</label>
@@ -602,7 +563,6 @@ function renderGoalCards(){
           </div>
         </div>
       </div>
-
       <div class="field">
         <label>Already saved for this goal</label>
         <div class="input-row">
@@ -610,9 +570,7 @@ function renderGoalCards(){
           <input type="number" value="${g.savings}" inputmode="numeric" oninput="updateField('${g.id}','savings',this.value)">
         </div>
       </div>
-
       <div class="allocation-hint" id="alloc-${g.id}"></div>
-
       <div class="toggle-row">
         <div class="txt">
           <strong>Step up SIP yearly</strong>
@@ -620,7 +578,6 @@ function renderGoalCards(){
         </div>
         <div class="switch ${g.stepupOn?'on':''}" onclick="toggleStepup('${g.id}')"></div>
       </div>
-
       ${g.stepupOn ? `
       <div class="field">
         <label>Annual step-up</label>
@@ -629,7 +586,6 @@ function renderGoalCards(){
           <span class="suffix">% / yr</span>
         </div>
       </div>` : ''}
-
       <div class="goal-result">
         <div class="row"><div class="k">Cost after inflation</div><div class="v" id="future-${g.id}">₹0</div></div>
         <div class="row"><div class="k">Savings grown by then</div><div class="v" id="grown-${g.id}">₹0</div></div>
@@ -649,7 +605,6 @@ function renderGoalCards(){
     refreshAllocation(g.id);
   });
 }
-
 function refreshAllocation(id){
   const g = goals.find(g => g.id === id);
   if(!g) return;
@@ -658,7 +613,6 @@ function refreshAllocation(id){
   const hint = allocationHint(g.years);
   el.innerHTML = hint.text;
 }
-
 function simulateStepup(startSIP, years, monthlyRate, annualStepupPct){
   let corpus = 0;
   let sip = startSIP;
@@ -670,17 +624,14 @@ function simulateStepup(startSIP, years, monthlyRate, annualStepupPct){
   }
   return corpus;
 }
-
 function computeGoal(g){
   const futureCost = g.cost * Math.pow(1 + g.inflation/100, g.years);
   const savingsGrown = g.savings * Math.pow(1 + g.returnRate/100, g.years);
   const gap = Math.max(futureCost - savingsGrown, 0);
   const months = Math.round(g.years * 12);
   const r = Math.pow(1 + g.returnRate/100, 1/12) - 1;
-
   let sip = 0;
   let schedule = [];
-
   if(!g.stepupOn){
     if(months > 0 && r > 0){
       const factor = ((Math.pow(1+r, months) - 1) / r) * (1+r);
@@ -703,19 +654,15 @@ function computeGoal(g){
       s = s * (1 + g.stepupRate/100);
     }
   }
-
   return { futureCost, savingsGrown, gap, sip: Math.max(sip,0), schedule };
 }
-
 function computeAll(){
   let total = 0;
   const barData = [];
-
   goals.forEach(g => {
     const r = computeGoal(g);
     total += r.sip;
     barData.push({ name: g.name, sip: r.sip });
-
     const futureEl = document.getElementById('future-' + g.id);
     if(futureEl){
       document.getElementById('future-' + g.id).textContent = fmt(r.futureCost);
@@ -723,7 +670,6 @@ function computeAll(){
       document.getElementById('gap-' + g.id).textContent = fmt(r.gap);
       document.getElementById('sip-' + g.id).textContent = fmt(r.sip);
       document.getElementById('siplabel-' + g.id).textContent = g.stepupOn ? 'Monthly SIP (Year 1)' : 'Monthly SIP';
-
       const pill = document.getElementById('pill-' + g.id);
       if(g.years <= 0){
         pill.textContent = 'Check years'; pill.className = 'pill warn';
@@ -732,7 +678,6 @@ function computeAll(){
       } else {
         pill.textContent = 'Plan computed'; pill.className = 'pill ok';
       }
-
       const wrap = document.getElementById('stepupwrap-' + g.id);
       if(g.stepupOn){
         wrap.style.display = 'block';
@@ -743,10 +688,8 @@ function computeAll(){
       }
     }
   });
-
   document.getElementById('grandTotal').textContent = fmt(total);
   persistGoals();
-
   const barList = document.getElementById('barList');
   barList.innerHTML = '';
   if(total > 0){
@@ -763,7 +706,6 @@ function computeAll(){
     });
   }
 }
-
 // restore any previously saved plan; otherwise seed with one example goal
 if(loadGoals()){
   renderGoalCards();
@@ -771,7 +713,6 @@ if(loadGoals()){
 } else {
   addGoal('education');
 }
-
 // let users clear their saved plan and start fresh
 (function addResetLink(){
   const footer = document.querySelector('footer');
@@ -788,7 +729,6 @@ if(loadGoals()){
   footer.appendChild(document.createElement('br'));
   footer.appendChild(btn);
 })();
-
 /* ---------------- saved reports (manual snapshots) ---------------- */
 const REPORTS_KEY = 'financeToolkit::goalPlanner::reports::v1';
 function loadReports(){
@@ -875,5 +815,61 @@ function renderReportsPanel(){
   renderReportsPanel();
 })();
 </script>
+<div id="fcBackupWrap" style="position:fixed;bottom:16px;left:16px;z-index:999;font-family:sans-serif;">
+  <button id="fcBackupToggle" title="Backup / Restore your data" style="width:44px;height:44px;border-radius:50%;background:#1E2420;color:#ECEAE1;border:1px solid #2B322C;font-size:18px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.4);">💾</button>
+  <div id="fcBackupMenu" style="display:none;position:absolute;bottom:52px;left:0;background:#161B17;border:1px solid #2B322C;border-radius:10px;padding:8px;min-width:190px;box-shadow:0 6px 18px rgba(0,0,0,0.4);">
+    <div style="font-size:11px;color:#8C9389;padding:4px 6px 8px;">Your data lives only in this browser. Back it up before clearing history.</div>
+    <button id="fcExportBtn" style="display:block;width:100%;margin-bottom:6px;padding:9px;background:#C8A24A;color:#171207;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Export backup (.json)</button>
+    <button id="fcImportBtn" style="display:block;width:100%;padding:9px;background:transparent;color:#ECEAE1;border:1px solid #2B322C;border-radius:6px;font-size:13px;cursor:pointer;">Restore from backup</button>
+    <input type="file" id="fcImportFile" accept="application/json" style="display:none;">
+  </div>
+</div>
+<script>
+(function(){
+  const KEYS = ['financeToolkit::goalPlanner::v1','financeToolkit::goalPlanner::reports::v1'];
+  const toggle = document.getElementById('fcBackupToggle');
+  const menu = document.getElementById('fcBackupMenu');
+  document.addEventListener('click', (e)=>{
+    if(!menu.contains(e.target) && e.target!==toggle){ menu.style.display='none'; }
+  });
+  toggle.addEventListener('click', (e)=>{ e.stopPropagation(); menu.style.display = menu.style.display==='none' ? 'block' : 'none'; });
+  document.getElementById('fcExportBtn').addEventListener('click', ()=>{
+    try{
+      const data = {};
+      KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data[k]=v; });
+      const payload = { app: document.title, exportedAt: new Date().toISOString(), data };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const fname = document.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+      a.href = url; a.download = fname + '-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      menu.style.display='none';
+    }catch(err){ alert('Export failed: ' + err.message); }
+  });
+
+  document.getElementById('fcImportBtn').addEventListener('click', ()=>{ document.getElementById('fcImportFile').click(); });
+  document.getElementById('fcImportFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const parsed = JSON.parse(reader.result);
+        const data = parsed.data || parsed;
+        if(!data || typeof data !== 'object') throw new Error('Unrecognized file format');
+        if(!confirm('This will overwrite your current data in this browser with the backup contents. Continue?')) return;
+        for(const k in data){ localStorage.setItem(k, data[k]); }
+        alert('Backup restored. Reloading…');
+        location.reload();
+      }catch(err){ alert('Restore failed: could not read that file (' + err.message + ')'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+})();
+</script>
+
 </body>
 </html>
