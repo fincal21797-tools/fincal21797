@@ -1256,13 +1256,11 @@ function attachDynamicHandlers(){
     tp.lastRecorded = ym;
     await saveState(); render(); showToast('Recorded this month');
   }));
-
   const subnav = document.querySelector('.subnav');
   if(subnav) subnav.addEventListener('click', e=>{
     const b = e.target.closest('button'); if(!b) return;
     txSubTab = b.dataset.sub; render();
   });
-
   const efInput = document.getElementById('efMonthsInput');
   if(efInput) efInput.addEventListener('change', async ()=>{
     state.settings.efMonths = parseFloat(efInput.value)||6;
@@ -1283,5 +1281,62 @@ function attachDynamicHandlers(){
 }
 loadState();
 </script>
+<div id="fcBackupWrap" style="position:fixed;bottom:16px;left:16px;z-index:999;font-family:'Inter',sans-serif;">
+  <button id="fcBackupToggle" title="Backup / Restore your data" style="width:44px;height:44px;border-radius:50%;background:#1E2420;color:#ECEAE1;border:1px solid #2B322C;font-size:18px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.4);">💾</button>
+  <div id="fcBackupMenu" style="display:none;position:absolute;bottom:52px;left:0;background:#161B17;border:1px solid #2B322C;border-radius:10px;padding:8px;min-width:190px;box-shadow:0 6px 18px rgba(0,0,0,0.4);">
+    <div style="font-size:11px;color:#8C9389;padding:4px 6px 8px;">Your data lives only in this browser. Back it up before clearing history.</div>
+    <button id="fcExportBtn" style="display:block;width:100%;margin-bottom:6px;padding:9px;background:#C8A24A;color:#171207;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">Export backup (.json)</button>
+    <button id="fcImportBtn" style="display:block;width:100%;padding:9px;background:transparent;color:#ECEAE1;border:1px solid #2B322C;border-radius:6px;font-size:13px;cursor:pointer;">Restore from backup</button>
+    <input type="file" id="fcImportFile" accept="application/json" style="display:none;">
+  </div>
+</div>
+<script>
+(function(){
+  const toggle = document.getElementById('fcBackupToggle');
+  const menu = document.getElementById('fcBackupMenu');
+  document.addEventListener('click', (e)=>{
+    if(!menu.contains(e.target) && e.target!==toggle){ menu.style.display='none'; }
+  });
+  toggle.addEventListener('click', (e)=>{ e.stopPropagation(); menu.style.display = menu.style.display==='none' ? 'block' : 'none'; });
+  document.getElementById('fcExportBtn').addEventListener('click', async ()=>{
+    try{
+      const list = await window.storage.list();
+      const keys = (list && list.keys) || [];
+      const data = {};
+      for(const k of keys){
+        const r = await window.storage.get(k);
+        if(r) data[k] = r.value;
+      }
+      const payload = { app: document.title, exportedAt: new Date().toISOString(), data };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const fname = document.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+      a.href = url; a.download = fname + '-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      menu.style.display='none';
+    }catch(err){ alert('Export failed: ' + err.message); }
+  });
+
+  document.getElementById('fcImportBtn').addEventListener('click', ()=>{ document.getElementById('fcImportFile').click(); });
+  document.getElementById('fcImportFile').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = parsed.data || parsed;
+      if(!data || typeof data !== 'object') throw new Error('Unrecognized file format');
+      if(!confirm('This will overwrite your current data in this browser with the backup contents. Continue?')) return;
+      for(const k in data){ await window.storage.set(k, data[k]); }
+      alert('Backup restored. Reloading…');
+      location.reload();
+    }catch(err){ alert('Restore failed: could not read that file (' + err.message + ')'); }
+    e.target.value = '';
+  });
+})();
+</script>
+
 </body>
 </html>
