@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Health Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0E2233;
+    --navy:#163A4D;
+    --teal:#1E4E5F;
+    --paper:#F3EFE4;
+    --ink:#0E2233;
+    --ink-soft:#3E5464;
+    --gold:#C79A45;
+    --gold-bright:#E0B25C;
+    --green:#4C8C68;
+    --amber:#C98A3B;
+    --red:#B2503F;
+    --rule:rgba(14,34,51,0.18);
+    --rule-light:rgba(243,239,228,0.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(30,78,95,0.55), transparent 55%),
+      radial-gradient(circle at 90% 100%, rgba(199,154,69,0.10), transparent 45%);
+    font-family:'Inter',sans-serif;
+    color:var(--paper);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:0;
+  }
+  .app{
+    width:100%;
+    max-width:520px;
+    min-height:100vh;
+    background:var(--paper);
+    color:var(--ink);
+    position:relative;
+    box-shadow:0 0 60px rgba(0,0,0,0.35);
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Header / masthead */
+  .masthead{
+    background:var(--navy);
+    color:var(--paper);
+    padding:22px 22px 18px;
+    border-bottom:3px double var(--gold);
+    position:relative;
+  }
+  .masthead .kicker{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    color:var(--gold-bright);
+    display:flex;
+    justify-content:space-between;
+  }
+  .masthead h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:26px;
+    margin:8px 0 4px;
+    line-height:1.15;
+  }
+  .masthead p.sub{
+    margin:0;
+    font-size:12.5px;
+    color:rgba(243,239,228,0.72);
+    line-height:1.5;
+    max-width:40ch;
+  }
+
+  /* Progress ledger bar */
+  .ledger-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 22px;
+    background:#E8E2D2;
+    border-bottom:1px solid var(--rule);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .ledger-track{
+    flex:1;
+    height:5px;
+    background:rgba(14,34,51,0.12);
+    position:relative;
+    overflow:hidden;
+  }
+  .ledger-track .fill{
+    position:absolute; left:0; top:0; bottom:0;
+    background:var(--gold);
+    transition:width .35s ease;
+  }
+
+  .stage{
+    flex:1;
+    padding:28px 22px 34px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Intro screen */
+  .intro-card{
+    border:1px solid var(--rule);
+    padding:18px;
+    background:#fff8;
+  }
+  .intro-card h2{
+    font-family:'Source Serif 4',serif;
+    font-size:18px;
+    margin:0 0 10px;
+  }
+  .intro-card p{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+  }
+  .intro-list{
+    margin:14px 0 0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .intro-list li{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.02em;
+    color:var(--ink-soft);
+    border:1px solid var(--rule);
+    padding:8px 8px;
+    text-align:center;
+  }
+  .intro-list li b{
+    display:block;
+    font-family:'Source Serif 4',serif;
+    font-size:15px;
+    color:var(--navy);
+    font-weight:600;
+  }
+
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:0.03em;
+    padding:14px 18px;
+    background:var(--navy);
+    color:var(--paper);
+    width:100%;
+    transition:transform .12s ease, background .15s ease;
+  }
+  .btn:hover{background:var(--teal);}
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{margin-top:20px;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--navy);
+    border:1px solid var(--navy);
+  }
+  .btn-ghost:hover{background:rgba(22,58,77,0.06);}
+
+  /* Question screen */
+  .q-index{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--gold);
+    letter-spacing:0.05em;
+    margin-bottom:8px;
+  }
+  .q-pillar{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:14px;
+  }
+  .q-text{
+    font-family:'Source Serif 4',serif;
+    font-size:21px;
+    line-height:1.35;
+    margin:0 0 22px;
+    color:var(--ink);
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:auto;
+  }
+  .option{
+    border:1px solid var(--rule);
+    background:#fff;
+    padding:14px 16px;
+    font-size:14.5px;
+    color:var(--ink);
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .option:hover{border-color:var(--navy);}
+  .option .mark{
+    width:16px;height:16px;
+    border:1.5px solid var(--ink-soft);
+    border-radius:50%;
+    flex-shrink:0;
+    position:relative;
+  }
+  .option.selected{
+    border-color:var(--navy);
+    background:rgba(22,58,77,0.06);
+  }
+  .option.selected .mark{
+    border-color:var(--navy);
+  }
+  .option.selected .mark::after{
+    content:'';
+    position:absolute; inset:3px;
+    background:var(--navy);
+    border-radius:50%;
+  }
+
+  .nav-row{
+    display:flex;
+    gap:10px;
+    margin-top:24px;
+  }
+  .nav-row .btn{flex:1;}
+
+  /* Results */
+  .cert{
+    border:2px solid var(--navy);
+    padding:26px 20px 22px;
+    position:relative;
+    background:#fff;
+    text-align:center;
+  }
+  .cert::before{
+    content:'';
+    position:absolute; inset:6px;
+    border:1px solid var(--gold);
+    pointer-events:none;
+  }
+  .cert .cert-kicker{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .score-ring{
+    width:158px;height:158px;
+    margin:16px auto 8px;
+    position:relative;
+  }
+  .score-ring svg{transform:rotate(-90deg);}
+  .score-num{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .score-num .n{
+    font-family:'Source Serif 4',serif;
+    font-size:42px;
+    font-weight:700;
+    color:var(--navy);
+    line-height:1;
+  }
+  .score-num .d{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .band-name{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:20px;
+    margin:6px 0 2px;
+  }
+  .band-desc{
+    font-size:13px;
+    color:var(--ink-soft);
+    max-width:34ch;
+    margin:0 auto;
+    line-height:1.5;
+  }
+
+  .section-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--navy);
+    margin:28px 0 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--rule);
+  }
+
+  .pillar-row{
+    margin-bottom:14px;
+  }
+  .pillar-head{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    margin-bottom:5px;
+  }
+  .pillar-head .name{font-weight:600;}
+  .pillar-head .frac{font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); font-size:11.5px;}
+  .pillar-track{
+    height:7px;
+    background:rgba(14,34,51,0.10);
+    position:relative;
+    overflow:hidden;
+  }
+  .pillar-fill{
+    position:absolute; left:0; top:0; bottom:0;
+  }
+
+  .note-card{
+    border-left:3px solid var(--red);
+    background:#fff;
+    padding:12px 14px;
+    margin-bottom:10px;
+    font-size:13.5px;
+    line-height:1.55;
+  }
+  .note-card.good{border-left-color:var(--green);}
+  .note-card .label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    display:block;
+    margin-bottom:4px;
+    color:var(--ink-soft);
+  }
+  .note-card.good .label{color:var(--green);}
+  .note-card:not(.good) .label{color:var(--red);}
+
+  .footer-note{
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    margin-top:26px;
+    padding-top:16px;
+    border-top:1px solid var(--rule);
+  }
+  .footer-note a{color:var(--navy);}
+
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="masthead">
+    <div class="kicker"><span>PERSONAL FINANCE LEDGER</span><span id="dateStamp"></span></div>
+    <h1>Financial Health Check</h1>
+    <p class="sub">A 14-point self-assessment adapted from the SEBI-adopted Financial Health Check framework by P.V. Subramanyam &amp; M. Pattabiraman (freefincal).</p>
+  </div>
+
+  <div class="ledger-bar" id="ledgerBar">
+    <span id="ledgerLabel">START</span>
+    <div class="ledger-track"><div class="fill" id="ledgerFill" style="width:0%"></div></div>
+    <span id="ledgerCount">0/14</span>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+</div>
+
+<script>
+document.getElementById('dateStamp').textContent = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+
+// ---- Question bank -------------------------------------------------
+// Each question belongs to a pillar and carries point-weighted options.
+// Suggestion text mirrors the "area of concern / area of strength" style
+// of the original SEBI/freefincal Financial Health Check tool.
+
+const PILLARS = {
+  protect: {name:'Protection', color:'#B2503F', max:25},
+  liquid:  {name:'Liquidity & Emergency Readiness', color:'#C98A3B', max:15},
+  debt:    {name:'Debt Management', color:'#1E4E5F', max:20},
+  plan:    {name:'Retirement & Goal Planning', color:'#163A4D', max:25},
+  estate:  {name:'Family & Estate Readiness', color:'#4C8C68', max:15},
+};
+
+let hasDependents = true; // set by Q1, gates the life insurance question
+
+const QUESTIONS = [
+  {
+    id:'dependents', pillar:null,
+    text:'Does anyone depend on you financially?',
+    options:[
+      {label:'Yes', points:0, onSelect:()=>hasDependents=true},
+      {label:'No', points:0, onSelect:()=>hasDependents=false, note:{good:true, label:'Good to know', text:'With no financial dependents, life insurance is less urgent for you right now — it exists mainly to replace income for the people who rely on you.'}},
+    ]
+  },
+  {
+    id:'lifeCover', pillar:'protect', max:15,
+    text:'Do you have life insurance cover worth at least 15–20 times your annual income?',
+    skipIf: ()=>!hasDependents,
+    autoIfSkipped:{points:15},
+    options:[
+      {label:'Yes, I have adequate cover', points:15, note:{good:true, label:'Areas of strength', text:'You have life insurance coverage of at least 15–20 times your annual income. This is a key pillar of financial security for your dependents.'}},
+      {label:'I have some cover, not sure if enough', points:5, note:{good:false, label:'Areas of concern', text:'A term plan worth 15–20 times your annual income is the benchmark for dependents to be financially secure in your absence. Check your existing cover against this and top up with a pure term plan if it falls short.'}},
+      {label:'No cover', points:0, note:{good:false, label:'Areas of concern', text:'Since you have dependents but no life cover, it is recommended you buy a pure term insurance plan worth 15–20 times your annual income as soon as possible. Term plans are the cheapest way to protect your family\'s income.'}},
+    ]
+  },
+  {
+    id:'healthCover', pillar:'protect', max:7,
+    text:'Do you have health insurance for yourself and all your dependents (if any)?',
+    options:[
+      {label:'Yes, everyone is covered', points:7, note:{good:true, label:'Areas of strength', text:'It is great that you and your dependents are covered by health insurance — this is one of the most important shields against a financial setback.'}},
+      {label:'Only myself is covered', points:4, note:{good:false, label:'Areas of concern', text:'Since your dependents are not covered, it is recommended you add a family floater or standalone policy for each of them — a health cover of at least ₹5 lakh, or 50% of annual income, whichever is higher, is a reasonable starting point.'}},
+      {label:'No health insurance', points:0, note:{good:false, label:'Areas of concern', text:'As you don\'t have any health insurance, it is recommended to purchase a personal health insurance policy for at least ₹5 lakh, or 50% of your annual income (whichever is higher), for yourself and each dependent.'}},
+    ]
+  },
+  {
+    id:'healthAware', pillar:'protect', max:3,
+    text:'How well do you know the features, terms, waiting periods and exclusions of your health cover?',
+    options:[
+      {label:'Very well', points:3},
+      {label:'Somewhat', points:1.5, note:{good:false, label:'Areas of concern', text:'Read your policy wording once a year — especially room-rent limits, sub-limits, co-pay clauses and waiting periods for pre-existing conditions. This is where claims most often get rejected or reduced.'}},
+      {label:'Not really', points:0, note:{good:false, label:'Areas of concern', text:'It is recommended you go through your health policy document carefully, particularly the room-rent limits, co-pay clauses, and waiting periods, so you are not caught off guard at claim time.'}},
+    ]
+  },
+  {
+    id:'emergency', pillar:'liquid', max:15,
+    text:'How well can you handle a sudden, unexpected expense (medical bill, job loss, urgent repair)?',
+    options:[
+      {label:'Easily, from an emergency fund', points:15, note:{good:true, label:'Areas of strength', text:'You can comfortably absorb a financial shock without disturbing your investments or going into debt — this is the foundation everything else is built on.'}},
+      {label:'Could manage, but it would strain me', points:7, note:{good:false, label:'Areas of concern', text:'Work towards building your emergency fund up to at least six times your monthly expenses, kept in a separate savings account or liquid fund you can access immediately, without touching your salary or investment accounts.'}},
+      {label:'Would need to borrow or use credit', points:0, note:{good:false, label:'Areas of concern', text:'As you are not able to handle a sudden expense today, it is recommended you build an emergency fund over the next few months in a separate, instantly accessible account. Aim for at least six times your monthly expenses.'}},
+    ]
+  },
+  {
+    id:'creditcard', pillar:'debt', max:7,
+    text:'If you have a credit card, do you pay the bill in full before the due date each month?',
+    options:[
+      {label:'Yes, always in full', points:7, note:{good:true, label:'Areas of strength', text:'It is fantastic that you manage to pay your credit card bill in full before the due date every month — this keeps you free of the very high interest that revolving credit charges.'}},
+      {label:"I don't use a credit card", points:7},
+      {label:'No, I sometimes carry a balance', points:0, note:{good:false, label:'Areas of concern', text:'Credit card interest can run to 36–45% a year. It is recommended you prioritise clearing the outstanding balance in full, and treat the card strictly as a payment tool, not a source of credit, going forward.'}},
+    ]
+  },
+  {
+    id:'loans', pillar:'debt', max:7,
+    text:'Do you currently have any personal loans or other unsecured loans?',
+    options:[
+      {label:'No', points:7, note:{good:true, label:'Areas of strength', text:'It is fantastic that you have no personal or unsecured loans — this keeps your finances flexible and your interest costs low.'}},
+      {label:'Yes', points:0, note:{good:false, label:'Areas of concern', text:'Personal and unsecured loans typically carry high interest rates. It is recommended you prioritise paying these off before increasing discretionary investments, as the guaranteed "return" from clearing high-interest debt is hard to beat.'}},
+    ]
+  },
+  {
+    id:'emiRatio', pillar:'debt', max:6,
+    text:'Is your total EMI (home loan, car loan, personal loan etc.) more than 40% of your monthly take-home pay?',
+    options:[
+      {label:'No, well within 40%', points:6, note:{good:true, label:'Areas of strength', text:'Your total EMI outgo is comfortably below 40% of take-home pay. It is recommended you continue keeping debt as low as possible — this is the first step towards building wealth.'}},
+      {label:'No loans / EMIs at all', points:6},
+      {label:'Yes, above 40%', points:0, note:{good:false, label:'Areas of concern', text:'When EMIs cross 40% of take-home pay, saving for goals becomes very difficult. It is recommended you look at prepaying the costliest loan first, or restructuring your debt, to bring this ratio down.'}},
+    ]
+  },
+  {
+    id:'budget', pillar:'plan', max:7,
+    text:'Do you maintain a budget for your income and expenses?',
+    options:[
+      {label:'Yes, I track it regularly', points:7, note:{good:true, label:'Areas of strength', text:'It is great that you budget your income and expenses — this visibility is what makes every other financial decision easier.'}},
+      {label:'Informally, in my head', points:3, note:{good:false, label:'Areas of concern', text:'An informal sense of spending is a good start, but writing it down — even a simple needs/wants split with a target amount for each — makes overspending far easier to catch early.'}},
+      {label:'No budget', points:0, note:{good:false, label:'Areas of concern', text:'As you don\'t have a budget, it is recommended that you set one for income and expenditure each month, allocating a target amount for "needs" and "wants" so spending on wants doesn\'t creep past what you can afford.'}},
+    ]
+  },
+  {
+    id:'corpus', pillar:'plan', max:9,
+    text:'Have you calculated the retirement corpus you will need?',
+    options:[
+      {label:'Yes', points:9, note:{good:true, label:'Areas of strength', text:'Knowing your target retirement corpus turns "save more" into a concrete, trackable number — a genuine head start most people never get to.'}},
+      {label:'No', points:0, note:{good:false, label:'Areas of concern', text:'As you haven\'t calculated the corpus needed to retire comfortably, use a retirement goal calculator to work this out for your desired retirement age and expenses. Delaying this exercise can be costly — the required monthly investment tends to rise 10–12% for every year you put it off.'}},
+    ]
+  },
+  {
+    id:'investing', pillar:'plan', max:9,
+    text:'Are you currently investing enough to reach that retirement goal?',
+    options:[
+      {label:'Yes', points:9, note:{good:true, label:'Areas of strength', text:'It is great that you are investing enough for your financial independence after retirement — staying consistent here matters more than chasing returns.'}},
+      {label:'Not sure', points:4, note:{good:false, label:'Areas of concern', text:'Compare your current monthly investment against the amount your retirement goal actually requires. If you haven\'t worked out that required number yet, that is the first step — you can\'t know if you\'re investing "enough" without it.'}},
+      {label:'No, I am under-investing', points:0, note:{good:false, label:'Areas of concern', text:'It is recommended you increase your retirement investments, even gradually via step-up SIPs, to close the gap with your required corpus. The earlier this happens, the smaller the additional monthly amount needed.'}},
+    ]
+  },
+  {
+    id:'shared', pillar:'estate', max:5,
+    text:'Have you shared details of your investments with your spouse, children, or other dependents?',
+    options:[
+      {label:'Yes', points:5, note:{good:true, label:'Areas of strength', text:'Sharing your investment details means your family won\'t be left searching in the dark if something happens to you — a simple step that\'s easy to postpone but important to complete.'}},
+      {label:'No', points:0, note:{good:false, label:'Areas of concern', text:'As you haven\'t shared details of your investments with your dependents, it is recommended you discuss them soon, so your family does not struggle to manage your money if you are incapacitated or pass away.'}},
+    ]
+  },
+  {
+    id:'nomination', pillar:'estate', max:5,
+    text:'Have you added nomination details to all your investments and accounts?',
+    options:[
+      {label:'Yes, all of them', points:5, note:{good:true, label:'Areas of strength', text:'Nominations are in place across your investments — this is a small task with an outsized payoff for your family in an emergency.'}},
+      {label:'Some of them', points:2, note:{good:false, label:'Areas of concern', text:'Go through each of your bank accounts, mutual funds, insurance policies and demat accounts, and add or update nominations wherever missing.'}},
+      {label:'No', points:0, note:{good:false, label:'Areas of concern', text:'As you haven\'t added nomination details, it is recommended you do this immediately — it is a crucial step to ensure your loved ones have easy access to your investments in the event of your demise.'}},
+    ]
+  },
+  {
+    id:'will', pillar:'estate', max:5,
+    text:'Have you made a will?',
+    options:[
+      {label:'Yes', points:5, note:{good:true, label:'Areas of strength', text:'Having a will in place means your assets are distributed according to your wishes, not default succession law — one of the most overlooked pieces of financial planning.'}},
+      {label:'In progress', points:2},
+      {label:'No', points:0, note:{good:false, label:'Areas of concern', text:'It is recommended you create a will, and ensure the beneficiaries named in it also match the nominees on your accounts where possible, for smooth and swift transfer of assets.\n\nNote: a nomination alone is not enough — the provisions of a will prevail over a nomination.'}},
+    ]
+  },
+];
+
+// ---- State -----------------------------------------------------------
+let idx = 0;
+let answers = {}; // id -> {points, max, pillar, note}
+const activeQuestions = () => QUESTIONS.filter(q => !(q.skipIf && q.skipIf()));
+
+const stage = document.getElementById('stage');
+const ledgerFill = document.getElementById('ledgerFill');
+const ledgerLabel = document.getElementById('ledgerLabel');
+const ledgerCount = document.getElementById('ledgerCount');
+
+function renderIntro(){
+  ledgerLabel.textContent = 'START';
+  ledgerCount.textContent = '0/14';
+  ledgerFill.style.width = '0%';
+  stage.innerHTML = `
+    <div class="intro-card">
+      <h2>Before you begin</h2>
+      <p>You'll answer 13–14 short questions covering insurance, emergency savings, debt, retirement planning, and estate readiness. It takes about three minutes.</p>
+      <p>At the end you'll get a score out of 100, a breakdown by category, and specific suggestions — the same structure used in the SEBI Investor Education financial health check tool.</p>
+      <ul class="intro-list">
+        <li><b>5</b>Categories</li>
+        <li><b>14</b>Questions</li>
+        <li><b>100</b>Point scale</li>
+        <li><b>~3m</b>Time needed</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" onclick="startQuiz()">Begin assessment</button>
+  `;
+}
+
+function startQuiz(){
+  idx = 0; answers = {};
+  hasDependents = true;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const list = activeQuestions();
+  if (idx >= list.length){ renderResults(); return; }
+  const q = list[idx];
+  const pillarName = q.pillar ? PILLARS[q.pillar].name : 'Getting started';
+
+  ledgerLabel.textContent = pillarName.toUpperCase();
+  ledgerCount.textContent = `${idx+1}/${list.length}`;
+  ledgerFill.style.width = `${Math.round(((idx)/list.length)*100)}%`;
+
+  const selected = answers[q.id];
+
+  stage.innerHTML = `
+    <div class="q-index">Q${idx+1}</div>
+    <div class="q-pillar">${pillarName}</div>
+    <h2 class="q-text">${q.text}</h2>
+    <div class="options" id="optWrap"></div>
+    <div class="nav-row">
+      ${idx>0 ? '<button class="btn btn-ghost" onclick="prevQuestion()">Back</button>' : ''}
+      <button class="btn" id="nextBtn" ${selected?'':'disabled style="opacity:.4;cursor:not-allowed;"'} onclick="nextQuestion()">${idx===list.length-1?'See my results':'Next'}</button>
+    </div>
+  `;
+
+  const wrap = document.getElementById('optWrap');
+  q.options.forEach((opt, i)=>{
+    const div = document.createElement('button');
+    div.className = 'option' + (selected && selected.label===opt.label ? ' selected':'');
+    div.type='button';
+    div.innerHTML = `<span class="mark"></span><span>${opt.label}</span>`;
+    div.onclick = ()=>{
+      if (opt.onSelect) opt.onSelect();
+      answers[q.id] = {
+        label:opt.label, points:opt.points, max:q.max||0,
+        pillar:q.pillar, note:opt.note
+      };
+      renderQuestion();
+    };
+    wrap.appendChild(div);
+  });
+}
+
+function prevQuestion(){ idx = Math.max(0, idx-1); renderQuestion(); }
+function nextQuestion(){
+  const list = activeQuestions();
+  const q = list[idx];
+  if (!answers[q.id]) return;
+  idx++;
+  // handle auto-award for skipped questions the next time activeQuestions changes
+  renderQuestion();
+}
+
+function computeScore(){
+  const pillarScores = {};
+  Object.keys(PILLARS).forEach(k => pillarScores[k] = {earned:0, max:PILLARS[k].max});
+
+  // account for skipped question auto points (e.g. lifeCover when no dependents)
+  QUESTIONS.forEach(q=>{
+    if (q.skipIf && q.skipIf() && q.autoIfSkipped){
+      pillarScores[q.pillar].earned += q.autoIfSkipped.points;
+    }
+  });
+
+  Object.values(answers).forEach(a=>{
+    if (!a.pillar) return;
+    pillarScores[a.pillar].earned += a.points;
+  });
+
+  let total = 0, totalMax = 0;
+  Object.values(pillarScores).forEach(p=>{ total+=p.earned; totalMax+=p.max; });
+  return {pillarScores, total:Math.round(total), totalMax};
+}
+
+function bandFor(total){
+  if (total>=85) return {name:'Excellent Health', color:'#4C8C68', desc:'Your finances are on a strong footing across the board. Focus now on optimising and staying consistent.'};
+  if (total>=65) return {name:'Building Well', color:'#1E4E5F', desc:'You\'ve got solid habits in place. A few targeted fixes below will close the remaining gaps.'};
+  if (total>=40) return {name:'Needs Attention', color:'#C98A3B', desc:'Some foundational pieces are missing. Tackle the areas of concern below in order of priority.'};
+  return {name:'At Risk', color:'#B2503F', desc:'Several core protections are missing. Start with emergency savings and insurance before anything else.'};
+}
+
+function renderResults(){
+  ledgerLabel.textContent = 'COMPLETE';
+  ledgerCount.textContent = 'RESULT';
+  ledgerFill.style.width = '100%';
+
+  const {pillarScores, total, totalMax} = computeScore();
+  const band = bandFor(total);
+  const circumference = 2 * Math.PI * 66;
+  const pct = total/totalMax;
+  const dash = circumference*pct;
+
+  let pillarsHtml = '';
+  Object.entries(PILLARS).forEach(([key, p])=>{
+    const s = pillarScores[key];
+    const pillarPct = Math.round((s.earned/s.max)*100);
+    pillarsHtml += `
+      <div class="pillar-row">
+        <div class="pillar-head">
+          <span class="name">${p.name}</span>
+          <span class="frac">${Math.round(s.earned*10)/10}/${s.max}</span>
+        </div>
+        <div class="pillar-track">
+          <div class="pillar-fill" style="width:${pillarPct}%; background:${p.color};"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  const concerns = Object.values(answers).filter(a=>a.note && !a.note.good);
+  const strengths = Object.values(answers).filter(a=>a.note && a.note.good);
+
+  let concernsHtml = concerns.length ? concerns.map(a=>`
+    <div class="note-card">
+      <span class="label">${a.note.label}</span>${a.note.text.replace(/\n/g,'<br>')}
+    </div>`).join('') : `<div class="note-card good"><span class="label">Nothing flagged</span>No areas of concern were identified — nicely done.</div>`;
+
+  let strengthsHtml = strengths.length ? strengths.map(a=>`
+    <div class="note-card good">
+      <span class="label">${a.note.label}</span>${a.note.text}
+    </div>`).join('') : `<div class="note-card"><span class="label">None yet</span>No strong areas identified yet — the suggestions above are where to start.</div>`;
+
+  stage.innerHTML = `
+    <div class="cert">
+      <div class="cert-kicker">Financial Health Certificate</div>
+      <div class="score-ring">
+        <svg width="158" height="158" viewBox="0 0 158 158">
+          <circle cx="79" cy="79" r="66" fill="none" stroke="rgba(14,34,51,0.10)" stroke-width="12"/>
+          <circle cx="79" cy="79" r="66" fill="none" stroke="${band.color}" stroke-width="12"
+            stroke-dasharray="${dash} ${circumference}" stroke-linecap="round"/>
+        </svg>
+        <div class="score-num">
+          <span class="n">${total}</span>
+          <span class="d">out of ${totalMax}</span>
+        </div>
+      </div>
+      <div class="band-name" style="color:${band.color}">${band.name}</div>
+      <div class="band-desc">${band.desc}</div>
+    </div>
+
+    <div class="section-title">Score by category</div>
+    ${pillarsHtml}
+
+    <div class="section-title">Areas of concern</div>
+    ${concernsHtml}
+
+    <div class="section-title">Areas of strength</div>
+    ${strengthsHtml}
+
+    <button class="btn btn-primary" onclick="renderIntro()">Retake assessment</button>
+
+    <div class="footer-note">
+      Framework adapted from the SEBI Investor Education "Financial Health Check" tool, co-developed by P. V. Subramanyam &amp; M. Pattabiraman (freefincal.com). This is an educational self-assessment, not personalised financial advice.
+    </div>
+  `;
+}
+
+renderIntro();
+</script>
+</body>
+</html>
