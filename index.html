@@ -29,7 +29,6 @@
     color: transparent;
   }
   .header p { color: #8b949e; font-size: 0.95rem; margin: 0; }
-
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -37,7 +36,6 @@
     max-width: 900px;
     margin: 0 auto;
   }
-
   .card {
     position: relative;
     display: flex;
@@ -65,7 +63,6 @@
   }
   .card:hover::before, .card:active::before { opacity: 0.12; }
   .card > * { position: relative; z-index: 1; }
-
   .icon {
     font-size: 1.9rem;
     margin-bottom: 14px;
@@ -82,7 +79,6 @@
     color: #8b949e;
     margin-top: 4px;
   }
-
   .c1 { border-color: #3fb95044; } .c1::before { background: #3fb950; }
   .c2 { border-color: #f7788044; } .c2::before { background: #f77880; }
   .c3 { border-color: #ff7b7244; } .c3::before { background: #ff7b72; }
@@ -91,7 +87,7 @@
   .c6 { border-color: #a371f744; } .c6::before { background: #a371f7; }
   .c7 { border-color: #39c5cf44; } .c7::before { background: #39c5cf; }
   .c8 { border-color: #f0883e44; } .c8::before { background: #f0883e; }
-
+  .c9 { border-color: #ff5c8a44; } .c9::before { background: #ff5c8a; }
   .footer {
     text-align: center;
     color: #6e7681;
@@ -101,12 +97,10 @@
 </style>
 </head>
 <body>
-
 <div class="header">
   <h1>💰 My Finance Toolkit</h1>
   <p>All your personal finance calculators in one place</p>
 </div>
-
 <div class="grid">
   <a class="card c1" href="Ledger%20finance%20tracker.html">
     <span class="icon">📒</span>
@@ -115,7 +109,6 @@
       <div class="card-sub">Track income & expenses</div>
     </div>
   </a>
-
   <a class="card c2" href="Goal%20planner.html">
     <span class="icon">🎯</span>
     <div>
@@ -123,7 +116,6 @@
       <div class="card-sub">Plan & track savings goals</div>
     </div>
   </a>
-
   <a class="card c3" href="Debt%20engine.html">
     <span class="icon">💳</span>
     <div>
@@ -131,7 +123,6 @@
       <div class="card-sub">Payoff strategy planner</div>
     </div>
   </a>
-
   <a class="card c4" href="Retirement%20calculator.html">
     <span class="icon">🏖️</span>
     <div>
@@ -139,7 +130,6 @@
       <div class="card-sub">Plan for the future</div>
     </div>
   </a>
-
   <a class="card c5" href="Gold%20calculator.html">
     <span class="icon">🥇</span>
     <div>
@@ -147,7 +137,6 @@
       <div class="card-sub">Gold value & returns</div>
     </div>
   </a>
-
   <a class="card c6" href="Health%20insurance%20calculator.html">
     <span class="icon">🏥</span>
     <div>
@@ -171,10 +160,15 @@
       <div class="card-sub">Systematic withdrawal plan</div>
     </div>
   </a>
+
+  <a class="card c9" href="financial-health-check.html">
+    <span class="icon">🩺</span>
+    <div>
+      <div class="card-title">Financial Health Check</div>
+      <div class="card-sub">Score your financial fitness</div>
+    </div>
+  </a>
 </div>
-
 <div class="footer">Made with care · Personal Finance Toolkit</div>
-
 </body>
 </html>
-
