@@ -1,6 +1,10 @@
 {
   "name": "FinCal",
   "short_name": "FinCal",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "description": "Personal finance calculators: SIP, retirement, goal planning, debt, ledger, and more.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
