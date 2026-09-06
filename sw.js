@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fincal-cache-v1';
+const CACHE_NAME = 'fincal-cache-v2';
 
 const ASSETS = [
   './',
@@ -49,9 +49,31 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: cache-first, fall back to network, then update cache
+// Fetch strategy:
+// - HTML pages and the manifest: network-first (so updates show up immediately),
+//   falling back to cache only when offline.
+// - Everything else (icons, etc.): cache-first for speed.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const url = event.request.url;
+  const isNavigation = event.request.mode === 'navigate' || url.endsWith('.html');
+  const isManifest = url.endsWith('.webmanifest');
+
+  if (isNavigation || isManifest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
